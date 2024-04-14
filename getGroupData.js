@@ -1,13 +1,4 @@
-const fs = require('fs');
-
-// Use fs.readFile with a callback function
-fs.readFile('./testSampleChat.txt', 'utf8', cb);
-
-function cb(err, data) {
-  if (err) {
-    console.error('Error reading file:', err);
-    return;
-  }
+export default function getGroupData(data) {
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
     // Remove all invisible characters
@@ -90,7 +81,7 @@ function cb(err, data) {
       }
     }
 
-    console.log(groupMemberMessages);
+    return groupMemberMessages;
   } else {
     console.error('Error: Expected string data but received buffer');
   }

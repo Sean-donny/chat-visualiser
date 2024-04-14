@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import getGroupName from '../../getGroupName';
 import getGroupMembers from '../../getGroupMembers';
-import { sampleMessagesArray } from '../../testMessagesArray';
+import getGroupData from '../../getGroupData';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -46,7 +46,7 @@ const AcceptFile = () => {
           if (temp2) {
             setGroupMemberList(temp2);
           }
-          const temp3 = sampleMessagesArray;
+          const temp3 = getGroupData(event.target.result.toString());
           if (temp3) {
             setGroupMessages(temp3);
           }

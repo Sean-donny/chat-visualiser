@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 // Use fs.readFile with a callback function
-fs.readFile('./sample-chat.txt', 'utf8', cb);
+fs.readFile('./testSampleChat.txt', 'utf8', cb);
 
 function cb(err, data) {
   if (err) {
@@ -10,111 +10,143 @@ function cb(err, data) {
   }
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
-    // // Regex to search for group chat creation message
-    // const groupChatNameRegex = /(created\sgroup\s)([‘-‟])(.+)([‘-‟])/;
+    // Remove all invisible characters
+    const originalChat = data.replace(/‎/gm, '');
 
-    // // Remove all invisible characters
-    // const originalChat = data.replace(/‎/gm, '');
+    // Regex for positive lookahead on timestamp
+    const SPLIT_REGEX = /(?=^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\])/m;
 
-    // // Strict regex to search for date
-    // const DATE_REGEX = /^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\]\s/gm;
+    // Regex to match message signature
+    const MESSAGE_REGEX =
+      /^\[(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2}):(\d{2})\]\s(.+?):\s([\s\S]*)/;
 
-    // // Store group chat name if found
-    // let gcName = 'Your Group Chat';
+    const CALL_REGEX = /(?:Voice\scall|Video\scall),.+\d\s(?:sec|min|hr)/;
 
-    // // Split the chat by date to get the messages
-    // const chatMessages = originalChat.split(DATE_REGEX).splice(1);
+    // search token
+    const SEARCH_REGEX = /Test/g;
 
-    // for (const message of chatMessages) {
-    //   if (message.match(groupChatNameRegex)) {
-    //     gcName = message.split(':')[0].trim();
-    //     break;
-    //   }
-    // }
+    // Split the chat by timestamps to get the individual messages
+    const chatMessages = originalChat.split(SPLIT_REGEX).filter(Boolean);
 
-    // // If group chat name is found, return it; otherwise, return a default message
-    // return gcName ? gcName : null;
-    // const temp = getGroupMembers(data);
-    // console.log(temp);
-    var s =
-      "6/13/18, 3:40 AM - Messages to this group are now secured with end-to-end encryption. Tap for more info.\r\n6/13/18, 3:40 AM - You created group \"Test Group\"\r\n6/13/18, 3:42 AM - Zack added Emma\r\n6/13/18, 4:06 AM - Zack added Json\r\n6/13/18, 2:35 PM - Zack: Let's meet tomorrow.\r\n6/15/18, 5:34 PM - Emma: I'll create the Discord server by tonight.\r\nWe'll look into making the parser.\r\n7/15/18, 12:05 PM - Zack: Great, I'll add that to our schedule.\r\n7/15/18, 12:05 PM - Json: On our team calander - TCal?\r\n7/15/18, 12:05 PM - Zack: Yes, added on 7/15/18, 12:05 PM.\r\n7/15/18, 12:05 PM - Emma: Are we going JS on this?\r\n7/15/18, 12:05 PM - Json: You bet.\r\n7/15/18, 12:05 PM - Zack: JS is love, JS is life.\r\n7/15/18, 1:46 PM - Emma: Haha.\r\n7/15/18, 4:53 PM - Json: 👍🏻";
-    console.log(
-      data
-        .split(/(?=^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\])/m)
-        .filter(Boolean),
-    );
+    // Store group chat name
+    const gcName = extractGroupName(data);
+
+    // Array to store group member messages as objects
+    const groupMemberMessages = [];
+
+    // Array to store hit count and messages which match hit
+    const matchedMessages = [];
+
+    // Loop to iterate through messages and generate message entry object
+    for (const line of chatMessages) {
+      const match = MESSAGE_REGEX.exec(line);
+
+      if (match !== null) {
+        const Day = match[1].trim();
+        const Month = match[2].trim();
+        const Year = match[3].trim();
+        const Hour = match[4].trim();
+        const Minute = match[5].trim();
+        const Second = match[6].trim();
+        const Author = match[7].trim();
+        const Message = match[8].trim();
+        // Perform checks against irrelevant chat data
+
+        // check that message is not from the group itself
+        if (gcName !== null) {
+          if (Author.includes(gcName)) continue;
+        }
+
+        // check that message is not an attachment
+        if (
+          Message.includes('audio omitted') ||
+          Message.includes('image omitted') ||
+          Message.includes('GIF omitted') ||
+          Message.includes('Contact card omitted') ||
+          Message.includes('document omitted') ||
+          Message.includes('Location: https://maps.google.com/') ||
+          Message.includes('sticker omitted')
+        )
+          continue;
+
+        // check that message is not a member addition message
+        if (
+          Message.includes('You added ' + Author) ||
+          Message.includes(Author + ' created this group')
+        )
+          continue;
+
+        // check that message is not a poll
+        if (Message.includes('POLL:') && Message.includes('OPTION:')) continue;
+
+        // check that message is not a call
+        if (Message.match(CALL_REGEX)) continue;
+
+        const messageEntry = {
+          Day: Day,
+          Month: Month,
+          Year: Year,
+          Hour: Hour,
+          Minute: Minute,
+          Second: Second,
+          Author: Author,
+          Message: Message,
+        };
+        groupMemberMessages.push(messageEntry);
+      }
+    }
+
+    let hitCount = 0;
+
+    for (const message of groupMemberMessages) {
+      var res = message.Message.match(SEARCH_REGEX);
+      if (res) {
+        matchedMessages.push(message);
+        hitCount += res.length;
+      }
+    }
+
+    matchedMessages.push({ hitCount: hitCount });
+
+    console.log(matchedMessages);
   } else {
     console.error('Error: Expected string data but received buffer');
   }
 }
-// function getGroupMembers(data) {
-//   // Type guard to ensure data is a string
-//   if (typeof data === 'string') {
-//     // Remove all invisible characters
-//     const originalChat = data.replace(/‎/gm, '');
 
-//     // Regex to search for date
-//     const DATE_REGEX = /^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\]\s/gm;
+function extractGroupName(data) {
+  // Type guard to ensure data is a string
+  if (typeof data === 'string') {
+    // Regex to search for group chat creation message
+    const groupChatNameRegex =
+      /Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them./;
 
-//     // Split the chat by date to get the messages
-//     const chatMessages = originalChat.split(DATE_REGEX);
+    // Remove all invisible characters
+    const originalChat = data.replace(/‎/gm, '');
 
-//     // Store group chat name
-//     const gcName = getGroupName(data);
+    // Strict regex to search for date
+    const DATE_REGEX = /^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\]\s/gm;
 
-//     // Object to store group member messages count
-//     const groupMembers = {};
+    // Store group chat name if found
+    let gcName = 'Your Group Chat';
 
-//     // Loop to iterate through messages and count member messages
-//     for (const message of chatMessages) {
-//       // Skip empty messages
-//       if (!message.length) {
-//         continue;
-//       }
+    // Split the chat by date to get the messages
+    const chatMessages = originalChat.split(DATE_REGEX).splice(1);
 
-//       // Extract sender's name from the message
-//       const currentName = message.split(':')[0].trim();
+    for (const message of chatMessages) {
+      if (message.match(groupChatNameRegex)) {
+        gcName = message.split(':')[0].trim();
+        break;
+      }
+    }
 
-//       // Increment count of group member messages
-//       groupMembers[currentName] = (groupMembers[currentName] || 0) + 1;
-//     }
+    // If group chat name is found, return it; otherwise, return a default message
+    return gcName ? gcName : null;
+  } else {
+    console.error('Error: Expected string data but received buffer');
+  }
+}
 
-//     delete groupMembers[gcName];
+// searchGroupMessages
 
-//     return groupMembers;
-//   } else {
-//     console.error('Error: Expected string data but received buffer');
-//   }
-// }
-
-// function getGroupName(data) {
-//   // Type guard to ensure data is a string
-//   if (typeof data === 'string') {
-//     // Regex to search for group chat creation message
-//     const groupChatNameRegex = /(created\sgroup\s)([‘-‟])(.+)([‘-‟])/;
-
-//     // Remove all invisible characters
-//     const originalChat = data.replace(/‎/gm, '');
-
-//     // Strict regex to search for date
-//     const DATE_REGEX = /^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\]\s/gm;
-
-//     // Store group chat name if found
-//     let gcName = 'Your Group Chat';
-
-//     // Split the chat by date to get the messages
-//     const chatMessages = originalChat.split(DATE_REGEX).splice(1);
-
-//     for (const message of chatMessages) {
-//       if (message.match(groupChatNameRegex)) {
-//         gcName = message.split(':')[0].trim();
-//         break;
-//       }
-//     }
-
-//     // If group chat name is found, return it; otherwise, return a default message
-//     return gcName ? gcName : null;
-//   } else {
-//     console.error('Error: Expected string data but received buffer');
-//   }
-// }
+// Object.values(matchedMessages[matchedMessages.length - 1])
