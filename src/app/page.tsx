@@ -18,8 +18,8 @@ export default function Home() {
     //   )}
     // </ParentSize>
     <>
-      {/* <AcceptFile /> */}
-      <WordCloud width={900} height={300} />
+      <AcceptFile />
+      {/* <WordCloud width={900} height={300} /> */}
     </>
   );
 }
