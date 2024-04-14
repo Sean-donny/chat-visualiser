@@ -23,7 +23,7 @@ function cb(err, data) {
 
   // Gets the group name by fetching the text at the 0 index of the chat and splitting it at the ":" then returning the 0 index item of the function
 
-  const GROUP_NAME = chat[0].split(':')[0];
+  const gcName = chat[0].split(':')[0];
 
   // Sets the regex search value for the chat search
 
@@ -44,6 +44,6 @@ function cb(err, data) {
   //       }
   //     }
   //   }
-  //   delete groupMembers[GROUP_NAME];
+  //   delete groupMembers[gcName];
   //   console.log(groupMembers);
 }

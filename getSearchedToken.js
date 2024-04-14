@@ -9,7 +9,7 @@ export default function getSearchedToken(data) {
   const groupSearches = {};
 
   // Get the group chat name
-  const GROUP_NAME = extractGroupName(data);
+  const gcName = extractGroupName(data);
 
   // Sets the regex search value for the chat search
   const SEARCH_VALUE = /✅/g;
@@ -39,8 +39,8 @@ export default function getSearchedToken(data) {
   }
 
   // Delete the group itself as a member of this list if group name is extracted
-  if (GROUP_NAME !== null) {
-    delete groupSearches[GROUP_NAME];
+  if (gcName !== null) {
+    delete groupSearches[gcName];
   }
   return groupSearches;
 }

@@ -1,11 +1,25 @@
-import Image from 'next/image';
+import React from 'react';
+// import { createRoot } from 'react-dom/client';
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import WordCloud from './TopWordsCloud'; // Make sure to import your WordCloud component
+import './wordcloudStyles.css';
 import AcceptFile from './AcceptFile';
-// import { eggs } from '../../getGCName';
-// import { beans } from '../../getTopUsedWords';
 
 export default function Home() {
-  // console.log('From page:', eggs());
-  // console.log('testing top 20', beans());
+  // Creating a root for rendering the component
+  // const root = createRoot(document.getElementById('root')!);
 
-  return <AcceptFile />;
+  return (
+    // <ParentSize>
+    //   {({ width, height }: { width: number; height: number }) => (
+    //     <div style={{ width, height }}>
+    //       <WordCloud width={width} height={height} />
+    //     </div>
+    //   )}
+    // </ParentSize>
+    <>
+      {/* <AcceptFile /> */}
+      <WordCloud width={900} height={300} />
+    </>
+  );
 }

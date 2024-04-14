@@ -32,7 +32,7 @@ export default function getGroupMembers(data) {
 
     // Delete the group itself as a member of this list if group name is extracted
     if (gcName !== null) {
-      delete groupSearches[gcName];
+      delete groupMembers[gcName];
     }
 
     return groupMembers;

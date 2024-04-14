@@ -1,14 +1,4 @@
-var fs = require('fs');
-
-// Use fs.readFile with a callback function
-fs.readFile('./sample-chat.txt', 'utf8', cb);
-
-function cb(err, data) {
-  if (err) {
-    console.error('Error reading file:', err);
-    return;
-  }
-
+export default function getUserMostActiveTimes(data) {
   // Regular expression to match timestamps
   const TIMESTAMP_REGEX =
     /\[(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):\d{2}:\d{2}\]\s([^:]+):/g;

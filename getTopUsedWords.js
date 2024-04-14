@@ -33,8 +33,16 @@ export default function getTopUsedWords(data) {
         }
       }
 
-      // Extract words from the message
+      // Skip messages that contain omitted audio, image, or sticker
+      if (
+        message.includes('audio omitted') ||
+        message.includes('Image omitted') ||
+        message.includes('sticker omitted')
+      ) {
+        continue;
+      }
 
+      // Extract words from the message
       const justMessages = message.replace(senderNameRegex, '');
       const wordsBatch = justMessages.match(wordsRegex);
 
@@ -49,6 +57,10 @@ export default function getTopUsedWords(data) {
         }
       }
     }
+
+    // Remove 'omitted' from the word counts
+    delete wordsUsed['omitted'];
+
     // Convert wordsUsed object into an array of key-value pairs
     const wordCountArray = Object.entries(wordsUsed);
 
@@ -59,13 +71,13 @@ export default function getTopUsedWords(data) {
 
     if (wordCountArray.length < 5) {
       maxLength = wordCountArray.length;
-    } else if (wordCountArray.length < 20) {
-      maxLength = Math.floor(wordCountArray.length / 5) * 5;
     } else {
-      maxLength = 20;
+      maxLength = Math.min(100, Math.floor(wordCountArray.length / 5) * 5);
     }
 
-    const topUsedWords = wordCountArray.slice(0, maxLength);
+    const topUsedWords = wordCountArray
+      .slice(0, maxLength)
+      .map(([text, value]) => ({ text, value }));
 
     return topUsedWords;
   } else {
