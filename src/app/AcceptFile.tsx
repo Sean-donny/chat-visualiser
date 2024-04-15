@@ -13,6 +13,7 @@ import getUserMostActiveTimes from '../../getUserMostActiveTimes';
 import getMostActiveTime from '../../getMostActiveTime';
 import getTopUsedWords from '../../getTopUsedWords';
 import getUserYapAmount from '../../getUserYapAmount';
+import getUserMostUsedWords from '../../getUserMostUsedWords';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -64,6 +65,7 @@ const AcceptFile = () => {
       yapCount: number;
     }[]
   >([]);
+  const [userMostUsedWords, setUserMostUsedWords] = useState({});
 
   const chatRef = useRef<HTMLInputElement>(null);
 
@@ -124,6 +126,8 @@ const AcceptFile = () => {
       setTopUsedWords(words); // Update topUsedWords state
       const yappers = getUserYapAmount(groupMessages);
       setUserYapAmount(yappers);
+      const lexicon = getUserMostUsedWords(groupMessages);
+      setUserMostUsedWords(lexicon);
     }
   }, [groupMessages]); // Dependency on groupMessages
 
@@ -210,6 +214,13 @@ const AcceptFile = () => {
         <>
           <h1>Group Most Active Time:</h1>
           <pre>{JSON.stringify(groupMostActiveTime)}</pre>
+        </>
+      )}
+      <br />
+      {userMostUsedWords && (
+        <>
+          <h1>Users most used words:</h1>
+          <pre>{JSON.stringify(userMostUsedWords)}</pre>
         </>
       )}
       <br />
