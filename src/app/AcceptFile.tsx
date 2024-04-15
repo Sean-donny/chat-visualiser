@@ -8,6 +8,7 @@ import getGroupData from '../../getGroupData';
 import searchGroupMessages from '../../searchGroupMessages';
 import getDates from '../../getDates';
 import getTimes from '../../getTimes';
+import getMostActiveTime from '../../getMostActiveTime';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -44,6 +45,7 @@ const AcceptFile = () => {
   >([]);
   const [groupDates, setGroupDates] = useState({});
   const [groupTimes, setGroupTimes] = useState({});
+  const [groupMostActiveTime, setGroupMostActiveTime] = useState({});
 
   const chatRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +80,10 @@ const AcceptFile = () => {
           const temp5 = getTimes(event.target.result.toString());
           if (temp5) {
             setGroupTimes(temp5);
+          }
+          const temp6 = getMostActiveTime(event.target.result.toString());
+          if (temp6) {
+            setGroupMostActiveTime(temp6);
           }
         }
       };
@@ -142,6 +148,13 @@ const AcceptFile = () => {
         <>
           <h1>Group Times:</h1>
           <pre>{JSON.stringify(groupTimes)}</pre>
+        </>
+      )}
+      <br />
+      {groupMostActiveTime && (
+        <>
+          <h1>Group Most Active Time:</h1>
+          <pre>{JSON.stringify(groupMostActiveTime)}</pre>
         </>
       )}
       <br />
