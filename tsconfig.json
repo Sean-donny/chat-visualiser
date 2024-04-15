@@ -28,8 +28,9 @@
     ".next/types/**/*.ts",
     "getGroupName.js",
     "getGroupMembers.ts",
-    "getGroupData.js",
-    "getGroupData.js"
+    "getGroupData.ts",
+    "getGroupData.ts",
+    "getMostActiveTime.js"
   ],
   "exclude": ["node_modules"]
 }

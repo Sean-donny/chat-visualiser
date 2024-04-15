@@ -9,6 +9,7 @@ import searchGroupMessages from '../../searchGroupMessages';
 import getDates from '../../getDates';
 import getTimes from '../../getTimes';
 import getMostActiveTime from '../../getMostActiveTime';
+import getTopUsedWords from '../../getTopUsedWords';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -46,6 +47,12 @@ const AcceptFile = () => {
   const [groupDates, setGroupDates] = useState({});
   const [groupTimes, setGroupTimes] = useState({});
   const [groupMostActiveTime, setGroupMostActiveTime] = useState({});
+  const [topUsedWords, setTopUsedWords] = useState<
+    {
+      word: string;
+      count: number;
+    }[]
+  >([]);
 
   const chatRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +97,14 @@ const AcceptFile = () => {
       reader.readAsText(file);
     }
   };
+
+  useEffect(() => {
+    // Call getTopUsedWords whenever groupMessages changes (i.e., when getGroupData finishes processing)
+    if (groupMessages.length > 0) {
+      const words = getTopUsedWords(groupMessages); // Call getTopUsedWords with groupMessages
+      setTopUsedWords(words); // Update topUsedWords state
+    }
+  }, [groupMessages]); // Dependency on groupMessages
 
   const handleSearch = useDebouncedCallback((term: string) => {
     if (groupMessages) {
@@ -157,6 +172,18 @@ const AcceptFile = () => {
           <pre>{JSON.stringify(groupMostActiveTime)}</pre>
         </>
       )}
+      <br />
+      {topUsedWords &&
+        topUsedWords.map((word, index) => (
+          <div
+            key={index}
+            className="bg-green-500 w-full border-8 border-blue-600"
+          >
+            <p>Word: {word.word}</p>
+            <p>Count: {word.count}</p>
+            <br />
+          </div>
+        ))}
       <br />
       {textFile && <pre>{textFile}</pre>}
       <br />
