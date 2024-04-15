@@ -90,7 +90,8 @@ function extractGroupName(data) {
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
     // Regex to search for group chat creation message
-    const groupChatNameRegex = /(created\sgroup\s)([‘-‟])(.+)([‘-‟])/;
+    const groupChatNameRegex =
+      /Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them./;
 
     // Remove all invisible characters
     const originalChat = data.replace(/‎/gm, '');
