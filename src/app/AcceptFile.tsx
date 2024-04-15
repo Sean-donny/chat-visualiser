@@ -12,6 +12,7 @@ import getTimes from '../../getTimes';
 import getUserMostActiveTimes from '../../getUserMostActiveTimes';
 import getMostActiveTime from '../../getMostActiveTime';
 import getTopUsedWords from '../../getTopUsedWords';
+import getUserYapAmount from '../../getUserYapAmount';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -55,6 +56,12 @@ const AcceptFile = () => {
     {
       word: string;
       count: number;
+    }[]
+  >([]);
+  const [userYapAmount, setUserYapAmount] = useState<
+    {
+      user: string;
+      yapCount: number;
     }[]
   >([]);
 
@@ -115,6 +122,8 @@ const AcceptFile = () => {
     if (groupMessages.length > 0) {
       const words = getTopUsedWords(groupMessages); // Call getTopUsedWords with groupMessages
       setTopUsedWords(words); // Update topUsedWords state
+      const yappers = getUserYapAmount(groupMessages);
+      setUserYapAmount(yappers);
     }
   }, [groupMessages]); // Dependency on groupMessages
 
@@ -212,6 +221,18 @@ const AcceptFile = () => {
           >
             <p>Word: {word.word}</p>
             <p>Count: {word.count}</p>
+            <br />
+          </div>
+        ))}
+      <br />
+      {userYapAmount &&
+        userYapAmount.map((yapper, index) => (
+          <div
+            key={index}
+            className="bg-red-800 w-full border-8 border-blue-600"
+          >
+            <p>User: {yapper.user}</p>
+            <p>Yap Index: {yapper.yapCount}</p>
             <br />
           </div>
         ))}
