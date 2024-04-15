@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import getGroupName from '../../getGroupName';
 import getGroupMembers from '../../getGroupMembers';
+import getGroupMembersActivity from '../../getGroupMembersActivity';
 import getGroupData from '../../getGroupData';
 import searchGroupMessages from '../../searchGroupMessages';
 import getDates from '../../getDates';
@@ -17,6 +18,7 @@ const AcceptFile = () => {
     'Has not changed state yet',
   );
   const [groupMemberList, setGroupMemberList] = useState({});
+  const [groupMembersActivity, setGroupMembersActivity] = useState({});
   const [groupMessages, setGroupMessages] = useState<
     {
       Day: string;
@@ -92,6 +94,10 @@ const AcceptFile = () => {
           if (temp6) {
             setGroupMostActiveTime(temp6);
           }
+          const temp7 = getGroupMembersActivity(event.target.result.toString());
+          if (temp7) {
+            setGroupMembersActivity(temp7);
+          }
         }
       };
       reader.readAsText(file);
@@ -150,7 +156,19 @@ const AcceptFile = () => {
       />
       {groupChatName && <pre>{groupChatName}</pre>}
       <br />
-      {groupMemberList && <pre>{JSON.stringify(groupMemberList)}</pre>}
+      {groupMemberList && (
+        <>
+          <h1>Group Members Alphabetically: </h1>
+          <pre>{JSON.stringify(groupMemberList)}</pre>
+        </>
+      )}
+      <br />
+      {groupMembersActivity && (
+        <>
+          <h1>Group Members Ranked by Activity: </h1>
+          <pre>{JSON.stringify(groupMembersActivity)}</pre>
+        </>
+      )}
       <br />
       {groupDates && (
         <>

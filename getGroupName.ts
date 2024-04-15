@@ -1,4 +1,4 @@
-export default function getGroupName(data) {
+export default function getGroupName(data: string): string {
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
     // Regex to search for group chat creation message
@@ -28,5 +28,6 @@ export default function getGroupName(data) {
     return gcName;
   } else {
     console.error('Error: Expected string data but received buffer');
+    return 'Your Group Chat';
   }
 }

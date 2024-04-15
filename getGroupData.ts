@@ -1,4 +1,15 @@
-export default function getGroupData(data) {
+type MessageEntry = {
+  Day: string;
+  Month: string;
+  Year: string;
+  Hour: string;
+  Minute: string;
+  Second: string;
+  Author: string;
+  Message: string;
+};
+
+export default function getGroupData(data: string): MessageEntry[] | void {
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
     // Remove all invisible characters
@@ -20,27 +31,20 @@ export default function getGroupData(data) {
     const gcName = extractGroupName(data);
 
     // Array to store group member messages as objects
-    const groupMemberMessages = [];
+    const groupMemberMessages: MessageEntry[] = [];
 
     // Loop to iterate through messages and generate message entry object
     for (const line of chatMessages) {
       const match = MESSAGE_REGEX.exec(line);
 
       if (match !== null) {
-        const Day = match[1].trim();
-        const Month = match[2].trim();
-        const Year = match[3].trim();
-        const Hour = match[4].trim();
-        const Minute = match[5].trim();
-        const Second = match[6].trim();
-        const Author = match[7].trim();
-        const Message = match[8].trim();
+        const [, Day, Month, Year, Hour, Minute, Second, Author, Message] =
+          match;
+
         // Perform checks against irrelevant chat data
 
         // check that message is not from the group itself
-        if (gcName !== null) {
-          if (Author.includes(gcName)) continue;
-        }
+        if (gcName !== null && Author.includes(gcName)) continue;
 
         // check that message is not an attachment
         if (
@@ -67,15 +71,15 @@ export default function getGroupData(data) {
         // check that message is not a call
         if (Message.match(CALL_REGEX)) continue;
 
-        const messageEntry = {
-          Day: Day,
-          Month: Month,
-          Year: Year,
-          Hour: Hour,
-          Minute: Minute,
-          Second: Second,
-          Author: Author,
-          Message: Message,
+        const messageEntry: MessageEntry = {
+          Day: Day.trim(),
+          Month: Month.trim(),
+          Year: Year.trim(),
+          Hour: Hour.trim(),
+          Minute: Minute.trim(),
+          Second: Second.trim(),
+          Author: Author.trim(),
+          Message: Message.trim(),
         };
         groupMemberMessages.push(messageEntry);
       }
@@ -87,7 +91,7 @@ export default function getGroupData(data) {
   }
 }
 
-function extractGroupName(data) {
+function extractGroupName(data: string): string | null {
   // Type guard to ensure data is a string
   if (typeof data === 'string') {
     // Regex to search for group chat creation message
@@ -117,5 +121,6 @@ function extractGroupName(data) {
     return gcName ? gcName : null;
   } else {
     console.error('Error: Expected string data but received buffer');
+    return null;
   }
 }
