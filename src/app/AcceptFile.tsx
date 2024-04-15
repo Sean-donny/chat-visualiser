@@ -6,6 +6,7 @@ import getGroupName from '../../getGroupName';
 import getGroupMembers from '../../getGroupMembers';
 import getGroupData from '../../getGroupData';
 import searchGroupMessages from '../../searchGroupMessages';
+import getDates from '../../getDates';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('Has not changed state yet');
@@ -40,6 +41,7 @@ const AcceptFile = () => {
       | { hitCount: number }
     )[]
   >([]);
+  const [groupDates, setGroupDates] = useState({});
 
   const chatRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +68,10 @@ const AcceptFile = () => {
           const temp3 = getGroupData(event.target.result.toString());
           if (temp3) {
             setGroupMessages(temp3);
+          }
+          const temp4 = getDates(event.target.result.toString());
+          if (temp4) {
+            setGroupDates(temp4);
           }
         }
       };
@@ -118,6 +124,13 @@ const AcceptFile = () => {
       {groupChatName && <pre>{groupChatName}</pre>}
       <br />
       {groupMemberList && <pre>{JSON.stringify(groupMemberList)}</pre>}
+      <br />
+      {groupDates && (
+        <>
+          <h1>Group Dates:</h1>
+          <pre>{JSON.stringify(groupDates)}</pre>
+        </>
+      )}
       <br />
       {textFile && <pre>{textFile}</pre>}
       <br />
