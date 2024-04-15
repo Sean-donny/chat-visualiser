@@ -9,6 +9,7 @@ import getGroupData from '../../getGroupData';
 import searchGroupMessages from '../../searchGroupMessages';
 import getDates from '../../getDates';
 import getTimes from '../../getTimes';
+import getUserMostActiveTimes from '../../getUserMostActiveTimes';
 import getMostActiveTime from '../../getMostActiveTime';
 import getTopUsedWords from '../../getTopUsedWords';
 
@@ -48,6 +49,7 @@ const AcceptFile = () => {
   >([]);
   const [groupDates, setGroupDates] = useState({});
   const [groupTimes, setGroupTimes] = useState({});
+  const [userMostActiveTimes, setUserMostActiveTimes] = useState({});
   const [groupMostActiveTime, setGroupMostActiveTime] = useState({});
   const [topUsedWords, setTopUsedWords] = useState<
     {
@@ -97,6 +99,10 @@ const AcceptFile = () => {
           const temp7 = getGroupMembersActivity(event.target.result.toString());
           if (temp7) {
             setGroupMembersActivity(temp7);
+          }
+          const temp8 = getUserMostActiveTimes(event.target.result.toString());
+          if (temp8) {
+            setUserMostActiveTimes(temp8);
           }
         }
       };
@@ -181,6 +187,13 @@ const AcceptFile = () => {
         <>
           <h1>Group Times:</h1>
           <pre>{JSON.stringify(groupTimes)}</pre>
+        </>
+      )}
+      <br />
+      {userMostActiveTimes && (
+        <>
+          <h1>Users Most Active Times:</h1>
+          <pre>{JSON.stringify(userMostActiveTimes)}</pre>
         </>
       )}
       <br />
