@@ -1,8 +1,11 @@
-type SenderActiveTimes = { [sender: string]: number[] };
+interface HourlyActivity {
+  Hour: number;
+  [sender: string]: number;
+}
 
 export default function getUserMostActiveTimes(
   data: string,
-): SenderActiveTimes | null {
+): HourlyActivity[] | null {
   // Regular expression to match timestamps
   const TIMESTAMP_REGEX =
     /\[(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):\d{2}:\d{2}\]\s([^:]+):/g;
@@ -16,7 +19,7 @@ export default function getUserMostActiveTimes(
   }
 
   // Object to store sender-hour counts
-  const senderActiveTimes: SenderActiveTimes = {};
+  const senderActiveTimes: Record<number, { [sender: string]: number }> = {};
 
   // Extract sender and hour from each timestamp and update senderActiveTimes
   let match;
@@ -24,18 +27,28 @@ export default function getUserMostActiveTimes(
     const hour = parseInt(match[4], 10); // Extract the hour from the timestamp
     const sender = match[5].trim(); // Extract the sender
 
-    // Initialize sender in senderActiveTimes if not already present
-    if (!senderActiveTimes[sender]) {
-      senderActiveTimes[sender] = Array.from({ length: 24 }, () => 0);
+    // Check that sender is not the group chat itself
+    if (sender === gcName) continue;
+
+    // Initialize an hour object containing the sender and their count in senderActiveTimes if not already present
+    if (!senderActiveTimes[hour]) {
+      senderActiveTimes[hour] = { [sender]: 0 };
     }
 
-    // Increment the count for the corresponding hour
-    senderActiveTimes[sender][hour]++;
+    // Increment the count for the corresponding sender in the hour
+    senderActiveTimes[hour][sender] =
+      (senderActiveTimes[hour][sender] || 0) + 1;
   }
 
-  delete senderActiveTimes[gcName];
+  // Make Array of HourlyActivity objects
+  const hourlyActivityArray: HourlyActivity[] = Object.entries(
+    senderActiveTimes,
+  ).map(([hour, activity]) => ({
+    Hour: parseInt(hour),
+    ...activity,
+  }));
 
-  return senderActiveTimes;
+  return hourlyActivityArray;
 }
 
 function extractGroupName(data: string): string | null {

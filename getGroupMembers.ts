@@ -1,6 +1,9 @@
-type GroupMembers = { [key: string]: number };
+interface GroupMember {
+  Name: string;
+  Messages: number;
+}
 
-export default function getGroupMembers(data: string): GroupMembers | void {
+export default function getGroupMembers(data: string): GroupMember[] | void {
   // Type guard to ensure data is a string
   if (typeof data !== 'string') {
     console.error('Error: Expected string data but received buffer');
@@ -20,7 +23,7 @@ export default function getGroupMembers(data: string): GroupMembers | void {
   const gcName = extractGroupName(data);
 
   // Object to store group member messages count
-  const groupMembers: GroupMembers = {};
+  const groupMembers: Record<string, number> = {};
 
   // Loop to iterate through messages and count member messages
   for (const message of chatMessages) {
@@ -44,13 +47,13 @@ export default function getGroupMembers(data: string): GroupMembers | void {
   // Sort group members alphabetically
   const sortedMembers = Object.keys(groupMembers).sort();
 
-  // Create a new object with sorted members
-  const sortedGroupMembers: GroupMembers = {};
-  sortedMembers.forEach(member => {
-    sortedGroupMembers[member] = groupMembers[member];
-  });
+  // Create an array of GroupMember objects
+  const groupMemberArray: GroupMember[] = sortedMembers.map(name => ({
+    Name: name,
+    Messages: groupMembers[name],
+  }));
 
-  return sortedGroupMembers;
+  return groupMemberArray;
 }
 
 function extractGroupName(data: string): string | null {

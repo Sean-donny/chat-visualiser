@@ -15,13 +15,36 @@ import getTopUsedWords from '../../getTopUsedWords';
 import getUserYapAmount from '../../getUserYapAmount';
 import getUserMostUsedWords from '../../getUserMostUsedWords';
 
+import {
+  AreaChart,
+  BarChart,
+  BarList,
+  Card,
+  Divider,
+  EventProps,
+  LineChart,
+  List,
+  ListItem,
+} from '@tremor/react';
+import { RiUserLine } from '@remixicon/react';
+
 const AcceptFile = () => {
-  const [textFile, setTextFile] = useState('Has not changed state yet');
-  const [groupChatName, setGroupChatName] = useState(
-    'Has not changed state yet',
-  );
-  const [groupMemberList, setGroupMemberList] = useState({});
-  const [groupMembersActivity, setGroupMembersActivity] = useState({});
+  const [textFile, setTextFile] = useState('No chat input yet');
+  const [groupChatName, setGroupChatName] = useState('Your Group Chat');
+  const [groupMemberList, setGroupMemberList] = useState<
+    {
+      Name: string;
+      Messages: number;
+    }[]
+  >([]);
+  // Extract sender names from groupMemberList array
+  const [groupAuthors, setGroupAuthors] = useState<string[]>(['Author 1']);
+  const [groupMembersActivity, setGroupMembersActivity] = useState<
+    {
+      Name: string;
+      Activity: number;
+    }[]
+  >([]);
   const [groupMessages, setGroupMessages] = useState<
     {
       Day: string;
@@ -49,10 +72,24 @@ const AcceptFile = () => {
       | { hitCount: number }
     )[]
   >([]);
-  const [groupDates, setGroupDates] = useState({});
-  const [groupTimes, setGroupTimes] = useState({});
-  const [userMostActiveTimes, setUserMostActiveTimes] = useState({});
-  const [groupMostActiveTime, setGroupMostActiveTime] = useState({});
+  const [groupDates, setGroupDates] = useState<
+    {
+      date: string;
+      Messages: number;
+    }[]
+  >([]);
+  const [groupTimes, setGroupTimes] = useState<
+    { hour: number; Messages: number }[]
+  >([]);
+  const [userMostActiveTimes, setUserMostActiveTimes] = useState<
+    {
+      Hour: number;
+      [sender: string]: number;
+    }[]
+  >([]);
+  const [groupMostActiveTime, setGroupMostActiveTime] = useState<
+    { hour: number; Messages: number }[]
+  >([]);
   const [topUsedWords, setTopUsedWords] = useState<
     {
       word: string;
@@ -88,6 +125,9 @@ const AcceptFile = () => {
           const temp2 = getGroupMembers(event.target.result.toString());
           if (temp2) {
             setGroupMemberList(temp2);
+            // Extract sender names from groupMemberList array
+            const senderNames = temp2.map(member => member.Name);
+            setGroupAuthors(senderNames);
           }
           const temp3 = getGroupData(event.target.result.toString());
           if (temp3) {
@@ -163,6 +203,52 @@ const AcceptFile = () => {
     );
   }
 
+  const dataFormatter = (number: number): string => {
+    const locale = navigator.language || 'en-GB'; // Default to 'en-GB' if navigator.language is not available
+    return Intl.NumberFormat(locale).format(Math.round(number));
+  };
+
+  // Define an array of tremor colors from your tailwind config
+  const tremorColors = [
+    'indigo',
+    'emerald',
+    'yellow',
+    'teal',
+    'fuchsia',
+    'slate',
+    'lime',
+    'gray',
+    'zinc',
+    'neutral',
+    'stone',
+    'red',
+    'orange',
+    'amber',
+    'green',
+    'cyan',
+    'sky',
+    'blue',
+    'violet',
+    'purple',
+    'pink',
+    'rose',
+  ];
+
+  const [dmaValue, setDMAValue] = useState<EventProps>(null);
+
+  const transformedTopUsedWordsData = topUsedWords.map(item => ({
+    value: item.count, // Assuming 'count' corresponds to the value property of Bar<T>
+    name: item.word, // Assuming 'word' corresponds to the name property of Bar<T>
+  }));
+
+  const transformedYapperData = userYapAmount.map(item => ({
+    value: item.yapCount,
+    name: item.user,
+  }));
+
+  const [topUsedWordsVisibility, setTopUsedWordsVisibility] = useState(false);
+  const [yapIndexVisibility, setYapIndexVisibility] = useState(false);
+
   return (
     <div>
       <input
@@ -173,6 +259,155 @@ const AcceptFile = () => {
         onChange={handleFile}
         className="p-10 bg-blue-600 border-8 w-full"
       />
+      <Card className="mx-auto">
+        <p className="text-tremor-metric font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+          {groupChatName}
+        </p>
+        {Object.keys(groupMemberList).length > 0 && (
+          <p className="mt-4 flex items-center justify-between text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+            <span>
+              {groupMemberList.length > 1
+                ? `${groupMemberList.length} members`
+                : `${groupMemberList.length} member`}
+            </span>
+          </p>
+        )}
+      </Card>
+      <Card className="mx-auto">
+        <div className="flex flex-row justify-between">
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Group Members
+          </h3>
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Messages
+          </h3>
+        </div>
+        <List className="mt-2">
+          {groupMemberList.map((member, index) => (
+            <ListItem key={index}>
+              <span className="flex flex-row">
+                <RiUserLine />
+                {member.Name}
+              </span>
+              <span>{member.Messages}</span>
+            </ListItem>
+          ))}
+        </List>
+      </Card>
+      <Card className="mx-auto">
+        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Group Most Active Times
+        </h3>
+        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+          Cumulative Hourly Messaging Frequency Ranked in Descending Order
+        </p>
+        <BarChart
+          className="mt-6"
+          data={groupMostActiveTime}
+          index="hour"
+          categories={['Messages']}
+          colors={tremorColors.slice(Math.round(Math.random() * 21))}
+          valueFormatter={dataFormatter}
+          yAxisWidth={30}
+        />
+        <Divider>Hours</Divider>
+      </Card>
+      <Card className="mx-auto">
+        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Group Daily Messaging Activity
+        </h3>
+        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+          Messaging Frequency Across Days
+        </p>
+        <AreaChart
+          className="h-80"
+          data={groupDates}
+          index="date"
+          categories={['Messages']}
+          colors={tremorColors.slice(Math.round(Math.random() * 21))}
+          valueFormatter={dataFormatter}
+          yAxisWidth={30}
+          showAnimation={true}
+          autoMinValue={true}
+        />
+      </Card>
+      <Card className="mx-auto">
+        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Daily Messaging Activity
+        </h3>
+        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+          Cumulative Messaging Frequency Across Hours
+        </p>
+        <LineChart
+          className="h-80"
+          data={userMostActiveTimes}
+          index="Hour"
+          categories={groupAuthors}
+          colors={tremorColors}
+          valueFormatter={dataFormatter}
+          yAxisWidth={30}
+          showAnimation={true}
+          autoMinValue={true}
+          connectNulls={true}
+          onValueChange={v => setDMAValue(v)}
+        />
+        <Divider>Hours</Divider>
+      </Card>
+      <Card className="mx-auto">
+        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Total Group Daily Messaging Activity
+        </h3>
+        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+          Total Group Messaging Frequency Across Hours
+        </p>
+        <AreaChart
+          className="h-80"
+          data={groupTimes}
+          index="hour"
+          categories={['Messages']}
+          colors={tremorColors.slice(Math.round(Math.random() * 21))}
+          valueFormatter={dataFormatter}
+          yAxisWidth={30}
+          showAnimation={true}
+          autoMinValue={true}
+        />
+        <Divider>Hours</Divider>
+      </Card>
+      <Card
+        className="mx-auto cursor-pointer"
+        onClick={() => setTopUsedWordsVisibility(prev => !prev)}
+      >
+        <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Top Used Words
+        </h3>
+        {topUsedWordsVisibility && (
+          <>
+            <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
+              <span>Words</span>
+              <span>Count</span>
+            </p>
+            <BarList data={transformedTopUsedWordsData} className="mt-2" />
+          </>
+        )}
+      </Card>
+      <Card
+        className="mx-auto cursor-pointer"
+        onClick={() => setYapIndexVisibility(prev => !prev)}
+      >
+        <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Top Yapper
+        </h3>
+        {yapIndexVisibility && (
+          <>
+            <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
+              <span>Member</span>
+              <span>Words</span>
+            </p>
+            <BarList data={transformedYapperData} className="mt-2" />
+          </>
+        )}
+      </Card>
+
       {groupChatName && <pre>{groupChatName}</pre>}
       <br />
       {groupMemberList && (

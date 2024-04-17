@@ -1,6 +1,6 @@
 export default function getMostActiveTimes(
   data: string,
-): [number, number][] | [[number, number]] {
+): { hour: number; Messages: number }[] {
   // Type guard to ensure data is a string
   if (typeof data !== 'string') {
     throw new Error('Expected string data but received ' + typeof data);
@@ -41,8 +41,11 @@ export default function getMostActiveTimes(
   // Sort the array based on the active times in descending order
   activeTimesArray.sort((a, b) => b[1] - a[1]);
 
-  // Return the array of most active times
-  return activeTimesArray.length !== 0
-    ? activeTimesArray.map(([hour, count]) => [parseInt(hour), count])
-    : [[0, 0]];
+  // Convert the sorted array to the desired format of array of objects
+  const result = activeTimesArray.map(([hour, Messages]) => ({
+    hour: parseInt(hour),
+    Messages,
+  }));
+
+  return result;
 }
