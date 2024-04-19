@@ -4,6 +4,7 @@ import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import WordCloud from './TopWordsCloud'; // Make sure to import your WordCloud component
 import './wordcloudStyles.css';
 import AcceptFile from './AcceptFile';
+import HomePage from './HomePage';
 
 export default function Home() {
   // Creating a root for rendering the component
@@ -18,7 +19,8 @@ export default function Home() {
     //   )}
     // </ParentSize>
     <>
-      <AcceptFile />
+      <HomePage />
+      {/* <AcceptFile /> */}
       {/* <WordCloud width={900} height={300} /> */}
     </>
   );

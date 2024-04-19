@@ -30,10 +30,10 @@ export default function getTopUsedWords(
     if (words) {
       for (const word of words) {
         // Count occurrences of each word
-        if (wordsUsed[word]) {
-          wordsUsed[word]++;
+        if (wordsUsed[capitalizeFirstLetter(word)]) {
+          wordsUsed[capitalizeFirstLetter(word)]++;
         } else {
-          wordsUsed[word] = 1;
+          wordsUsed[capitalizeFirstLetter(word)] = 1;
         }
       }
     }
@@ -54,4 +54,8 @@ export default function getTopUsedWords(
   return wordCountArray
     .slice(0, maxLength)
     .map(([word, count]) => ({ word, count }));
+}
+
+function capitalizeFirstLetter(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }

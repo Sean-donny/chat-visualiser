@@ -19,14 +19,20 @@ import {
   AreaChart,
   BarChart,
   BarList,
+  Button,
   Card,
+  Dialog,
+  DialogPanel,
   Divider,
+  DonutChart,
   EventProps,
   LineChart,
   List,
   ListItem,
+  TextInput,
 } from '@tremor/react';
-import { RiUserLine } from '@remixicon/react';
+import { RiChatUploadLine, RiSearchLine, RiUserLine } from '@remixicon/react';
+import getSearchedToken from '../../getSearchedToken';
 
 const AcceptFile = () => {
   const [textFile, setTextFile] = useState('No chat input yet');
@@ -71,6 +77,9 @@ const AcceptFile = () => {
         }
       | { hitCount: number }
     )[]
+  >([]);
+  const [matchedMessagesCounts, setMatchedMessagesCounts] = useState<
+    { sender: string; Matches: number }[]
   >([]);
   const [groupDates, setGroupDates] = useState<
     {
@@ -171,12 +180,25 @@ const AcceptFile = () => {
     }
   }, [groupMessages]); // Dependency on groupMessages
 
+  const [emptySearch, setEmptySearch] = useState(true);
+
   const handleSearch = useDebouncedCallback((term: string) => {
-    if (groupMessages) {
-      const temp = searchGroupMessages(groupMessages, term);
-      if (temp) {
-        setMatchedMessages(temp);
+    // Check if search is empty
+    if (term !== '') {
+      setEmptySearch(false);
+      if (groupMessages) {
+        const temp = searchGroupMessages(groupMessages, term);
+        if (temp) {
+          setMatchedMessages(temp);
+        }
+        const tempCounts = getSearchedToken(groupMessages, term);
+        if (tempCounts) {
+          setMatchedMessagesCounts(tempCounts);
+        }
       }
+    } else {
+      setEmptySearch(true);
+      setMatchedMessages([]);
     }
   }, 300);
 
@@ -204,7 +226,7 @@ const AcceptFile = () => {
   }
 
   const dataFormatter = (number: number): string => {
-    const locale = navigator.language || 'en-GB'; // Default to 'en-GB' if navigator.language is not available
+    const locale = navigator?.language || 'en-GB'; // Default to 'en-GB' if navigator.language is not available
     return Intl.NumberFormat(locale).format(Math.round(number));
   };
 
@@ -215,12 +237,7 @@ const AcceptFile = () => {
     'yellow',
     'teal',
     'fuchsia',
-    'slate',
     'lime',
-    'gray',
-    'zinc',
-    'neutral',
-    'stone',
     'red',
     'orange',
     'amber',
@@ -246,19 +263,35 @@ const AcceptFile = () => {
     name: item.user,
   }));
 
+  const transformedMostActiveMemberData = groupMembersActivity.map(item => ({
+    value: item.Activity,
+    name: item.Name,
+  }));
+
   const [topUsedWordsVisibility, setTopUsedWordsVisibility] = useState(false);
   const [yapIndexVisibility, setYapIndexVisibility] = useState(false);
+  const [mostActiveMemberVisibility, setMostActiveMemberVisibility] =
+    useState(false);
 
   return (
     <div>
-      <input
-        type="file"
-        name="chatText"
-        id="chatText"
-        ref={chatRef}
-        onChange={handleFile}
-        className="p-10 bg-blue-600 border-8 w-full"
-      />
+      <Card className="mx-auto">
+        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+          Upload Your Group Chat
+        </h3>
+        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+          Must Be In *.txt Format
+        </p>
+        <input
+          type="file"
+          name="chatText"
+          id="chatTextFileUpload"
+          ref={chatRef}
+          onChange={handleFile}
+          className="mt-5"
+        />
+      </Card>
+
       <Card className="mx-auto">
         <p className="text-tremor-metric font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
           {groupChatName}
@@ -274,268 +307,250 @@ const AcceptFile = () => {
         )}
       </Card>
       <Card className="mx-auto">
-        <div className="flex flex-row justify-between">
-          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-            Group Members
-          </h3>
-          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-            Messages
-          </h3>
+        <div className="flex flex-col md:flex-row gap-5">
+          <Card className="w-full md:w-3/4">
+            <div className="flex flex-row justify-between">
+              <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+                Group Members
+              </h3>
+              <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+                Messages
+              </h3>
+            </div>
+            <List className="mt-2">
+              {groupMemberList.map((member, index) => (
+                <ListItem key={index}>
+                  <span className="flex flex-row">
+                    <RiUserLine />
+                    {member.Name}
+                  </span>
+                  <span>{member.Messages}</span>
+                </ListItem>
+              ))}
+            </List>
+          </Card>
+          <Card className="w-full md:w-1/4 items-start">
+            <span className="text-center block font-mono text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+              Group Messages
+            </span>
+            <div className="flex justify-center mt-5">
+              <DonutChart
+                data={transformedMostActiveMemberData}
+                variant="pie"
+                valueFormatter={dataFormatter}
+                onValueChange={v => console.log(v)}
+              />
+            </div>
+          </Card>
         </div>
-        <List className="mt-2">
-          {groupMemberList.map((member, index) => (
-            <ListItem key={index}>
-              <span className="flex flex-row">
-                <RiUserLine />
-                {member.Name}
-              </span>
-              <span>{member.Messages}</span>
-            </ListItem>
-          ))}
-        </List>
       </Card>
-      <Card className="mx-auto">
-        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Group Most Active Times
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-          Cumulative Hourly Messaging Frequency Ranked in Descending Order
-        </p>
-        <BarChart
-          className="mt-6"
-          data={groupMostActiveTime}
-          index="hour"
-          categories={['Messages']}
-          colors={tremorColors.slice(Math.round(Math.random() * 21))}
-          valueFormatter={dataFormatter}
-          yAxisWidth={30}
-        />
-        <Divider>Hours</Divider>
+      <Card className="mx-auto flex flex-col gap-5">
+        <Card className="mx-auto">
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Group Most Active Times
+          </h3>
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+            Cumulative Hourly Messaging Frequency Ranked in Descending Order
+          </p>
+          <BarChart
+            className="mt-6"
+            data={groupMostActiveTime}
+            index="hour"
+            categories={['Messages']}
+            colors={['emerald']}
+            valueFormatter={dataFormatter}
+            yAxisWidth={30}
+          />
+          <Divider>Hours</Divider>
+        </Card>
+        <Card className="mx-auto">
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Group Daily Messaging Activity
+          </h3>
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+            Messaging Frequency Across Days
+          </p>
+          <AreaChart
+            className="h-80"
+            data={groupDates}
+            index="date"
+            categories={['Messages']}
+            colors={['emerald']}
+            valueFormatter={dataFormatter}
+            yAxisWidth={30}
+            showAnimation={true}
+            autoMinValue={true}
+          />
+        </Card>
+        <Card className="mx-auto">
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Daily Messaging Activity
+          </h3>
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+            Cumulative Messaging Frequency Across Hours
+          </p>
+          <LineChart
+            className="h-80"
+            data={userMostActiveTimes}
+            index="Hour"
+            categories={groupAuthors}
+            colors={tremorColors}
+            valueFormatter={dataFormatter}
+            yAxisWidth={30}
+            showAnimation={true}
+            autoMinValue={true}
+            connectNulls={true}
+            onValueChange={v => setDMAValue(v)}
+          />
+          <Divider>Hours</Divider>
+        </Card>
+        <Card className="mx-auto">
+          <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Total Group Daily Messaging Activity
+          </h3>
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+            Total Group Messaging Frequency Across Hours
+          </p>
+          <AreaChart
+            className="h-80"
+            data={groupTimes}
+            index="hour"
+            categories={['Messages']}
+            colors={['emerald']}
+            valueFormatter={dataFormatter}
+            yAxisWidth={30}
+            showAnimation={true}
+            autoMinValue={true}
+          />
+          <Divider>Hours</Divider>
+        </Card>
+        <Card
+          className="mx-auto cursor-pointer"
+          onClick={() => setTopUsedWordsVisibility(prev => !prev)}
+        >
+          <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Top Used Words
+          </h3>
+          {topUsedWordsVisibility && (
+            <>
+              <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
+                <span>Words</span>
+                <span>Count</span>
+              </p>
+              <BarList data={transformedTopUsedWordsData} className="mt-2" />
+            </>
+          )}
+        </Card>
+        <Card
+          className="mx-auto cursor-pointer"
+          onClick={() => setYapIndexVisibility(prev => !prev)}
+        >
+          <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Top Yapper
+          </h3>
+          {yapIndexVisibility && (
+            <>
+              <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
+                <span>Member</span>
+                <span>Words</span>
+              </p>
+              <BarList data={transformedYapperData} className="mt-2" />
+            </>
+          )}
+        </Card>
+        <Card
+          className="mx-auto cursor-pointer"
+          onClick={() => setMostActiveMemberVisibility(prev => !prev)}
+        >
+          <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+            Most Active Members
+          </h3>
+          {mostActiveMemberVisibility && (
+            <>
+              <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
+                <span>Member</span>
+                <span>Messages</span>
+              </p>
+              <BarList
+                data={transformedMostActiveMemberData}
+                className="mt-2"
+              />
+            </>
+          )}
+        </Card>
       </Card>
-      <Card className="mx-auto">
-        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Group Daily Messaging Activity
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-          Messaging Frequency Across Days
-        </p>
-        <AreaChart
-          className="h-80"
-          data={groupDates}
-          index="date"
-          categories={['Messages']}
-          colors={tremorColors.slice(Math.round(Math.random() * 21))}
-          valueFormatter={dataFormatter}
-          yAxisWidth={30}
-          showAnimation={true}
-          autoMinValue={true}
-        />
-      </Card>
-      <Card className="mx-auto">
-        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Daily Messaging Activity
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-          Cumulative Messaging Frequency Across Hours
-        </p>
-        <LineChart
-          className="h-80"
-          data={userMostActiveTimes}
-          index="Hour"
-          categories={groupAuthors}
-          colors={tremorColors}
-          valueFormatter={dataFormatter}
-          yAxisWidth={30}
-          showAnimation={true}
-          autoMinValue={true}
-          connectNulls={true}
-          onValueChange={v => setDMAValue(v)}
-        />
-        <Divider>Hours</Divider>
-      </Card>
-      <Card className="mx-auto">
-        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Total Group Daily Messaging Activity
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-          Total Group Messaging Frequency Across Hours
-        </p>
-        <AreaChart
-          className="h-80"
-          data={groupTimes}
-          index="hour"
-          categories={['Messages']}
-          colors={tremorColors.slice(Math.round(Math.random() * 21))}
-          valueFormatter={dataFormatter}
-          yAxisWidth={30}
-          showAnimation={true}
-          autoMinValue={true}
-        />
-        <Divider>Hours</Divider>
-      </Card>
-      <Card
-        className="mx-auto cursor-pointer"
-        onClick={() => setTopUsedWordsVisibility(prev => !prev)}
-      >
-        <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Top Used Words
-        </h3>
-        {topUsedWordsVisibility && (
-          <>
-            <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
-              <span>Words</span>
-              <span>Count</span>
-            </p>
-            <BarList data={transformedTopUsedWordsData} className="mt-2" />
-          </>
-        )}
-      </Card>
-      <Card
-        className="mx-auto cursor-pointer"
-        onClick={() => setYapIndexVisibility(prev => !prev)}
-      >
-        <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Top Yapper
-        </h3>
-        {yapIndexVisibility && (
-          <>
-            <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
-              <span>Member</span>
-              <span>Words</span>
-            </p>
-            <BarList data={transformedYapperData} className="mt-2" />
-          </>
-        )}
-      </Card>
+      {matchedMessages && (
+        <Card className="mx-auto min-h-[37.5rem]">
+          <div className="relative flex flex-1 flex-shrink-0">
+            <label htmlFor="search" className="sr-only">
+              Search
+            </label>
+            <TextInput
+              icon={RiSearchLine}
+              placeholder="Search..."
+              onChange={e => {
+                handleSearch(e.target.value);
+              }}
+            />
+          </div>
+          {!emptySearch && (
+            <>
+              <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium mt-5">
+                Search Statistics
+              </h3>
+              <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+                Group Member Search Matches
+              </p>
+              <BarChart
+                className="mt-6"
+                data={matchedMessagesCounts}
+                index="sender"
+                categories={['Matches']}
+                colors={['emerald']}
+                valueFormatter={dataFormatter}
+                yAxisWidth={30}
+              />
 
-      {groupChatName && <pre>{groupChatName}</pre>}
-      <br />
-      {groupMemberList && (
-        <>
-          <h1>Group Members Alphabetically: </h1>
-          <pre>{JSON.stringify(groupMemberList)}</pre>
-        </>
+              {matchedMessages.slice(-1).map((message, index) => (
+                <Divider key={index}>
+                  Search matches:{' '}
+                  {!isMessageObject(message) && message.hitCount}
+                </Divider>
+              ))}
+            </>
+          )}
+          <List>
+            {matchedMessages &&
+              matchedMessages.map((message, index) => (
+                <ListItem key={index}>
+                  <div className="w-full">
+                    {isMessageObject(message) && (
+                      <div className="flex flex-col w-full p-4 rounded-md bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle">
+                        <div className="flex justify-between">
+                          <p className="text-emerald-500 font-semibold">
+                            {message.Author}
+                          </p>
+                          <p className="text-sm">
+                            {message.Hour}:{message.Minute} - {message.Day}/
+                            {message.Month}/{message.Year}
+                          </p>
+                        </div>
+                        {message.Message.split('\n').map((lines, index) => (
+                          <p
+                            className="text-tremor-content-strong dark:text-dark-tremor-content-strong py-2"
+                            key={index}
+                          >
+                            {lines}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </ListItem>
+              ))}
+          </List>
+        </Card>
       )}
-      <br />
-      {groupMembersActivity && (
-        <>
-          <h1>Group Members Ranked by Activity: </h1>
-          <pre>{JSON.stringify(groupMembersActivity)}</pre>
-        </>
-      )}
-      <br />
-      {groupDates && (
-        <>
-          <h1>Group Dates:</h1>
-          <pre>{JSON.stringify(groupDates)}</pre>
-        </>
-      )}
-      <br />
-      {groupTimes && (
-        <>
-          <h1>Group Times:</h1>
-          <pre>{JSON.stringify(groupTimes)}</pre>
-        </>
-      )}
-      <br />
-      {userMostActiveTimes && (
-        <>
-          <h1>Users Most Active Times:</h1>
-          <pre>{JSON.stringify(userMostActiveTimes)}</pre>
-        </>
-      )}
-      <br />
-      {groupMostActiveTime && (
-        <>
-          <h1>Group Most Active Time:</h1>
-          <pre>{JSON.stringify(groupMostActiveTime)}</pre>
-        </>
-      )}
-      <br />
-      {userMostUsedWords && (
-        <>
-          <h1>Users most used words:</h1>
-          <pre>{JSON.stringify(userMostUsedWords)}</pre>
-        </>
-      )}
-      <br />
-      {topUsedWords &&
-        topUsedWords.map((word, index) => (
-          <div
-            key={index}
-            className="bg-green-500 w-full border-8 border-blue-600"
-          >
-            <p>Word: {word.word}</p>
-            <p>Count: {word.count}</p>
-            <br />
-          </div>
-        ))}
-      <br />
-      {userYapAmount &&
-        userYapAmount.map((yapper, index) => (
-          <div
-            key={index}
-            className="bg-red-800 w-full border-8 border-blue-600"
-          >
-            <p>User: {yapper.user}</p>
-            <p>Yap Index: {yapper.yapCount}</p>
-            <br />
-          </div>
-        ))}
-      <br />
-      {textFile && <pre>{textFile}</pre>}
-      <br />
-      {groupMessages &&
-        groupMessages.map((message, index) => (
-          <div key={index}>
-            <p>
-              Date: {message.Day}/{message.Month}/{message.Year}
-            </p>
-            <p>
-              Time: {message.Hour}:{message.Minute}:{message.Second}
-            </p>
-            <p>Author: {message.Author}</p>
-            <p>Message: {message.Message}</p>
-            <br />
-          </div>
-        ))}
-      <div className="relative flex flex-1 flex-shrink-0">
-        <label htmlFor="search" className="sr-only">
-          Search
-        </label>
-        <input
-          className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-black"
-          // placeholder={placeholder}
-          onChange={e => {
-            handleSearch(e.target.value);
-          }}
-          // defaultValue={searchParams.get('query')?.toString()}
-        />
-      </div>
-      <h1>Search Result:</h1>
-      {matchedMessages &&
-        matchedMessages.map((message, index) => (
-          <div
-            key={index}
-            className="bg-green-500 w-full border-8 border-blue-600"
-          >
-            {isMessageObject(message) ? (
-              <>
-                <p>
-                  Date: {message.Day}/{message.Month}/{message.Year}
-                </p>
-                <p>
-                  Time: {message.Hour}:{message.Minute}:{message.Second}
-                </p>
-                <p>Author: {message.Author}</p>
-                <p>Message: {message.Message}</p>
-              </>
-            ) : (
-              <p>Hit Count: {message.hitCount}</p>
-            )}
-            <br />
-          </div>
-        ))}
     </div>
   );
 };
