@@ -14,6 +14,9 @@ import getTopUsedWords from '../../getTopUsedWords';
 import getUserYapAmount from '../../getUserYapAmount';
 import getUserMostUsedWords from '../../getUserMostUsedWords';
 import { useDebouncedCallback } from 'use-debounce';
+import Image from 'next/image';
+import ChatVizLogo from '../../public/ChatVizLogo.svg';
+import ChatVizIcon from '../../public/chat-visualisation-icon.png';
 
 import {
   AreaChart,
@@ -28,8 +31,10 @@ import {
   ListItem,
   TextInput,
 } from '@tremor/react';
-import { RiSearchLine, RiUserLine } from '@remixicon/react';
+import { RiSearchLine, RiUserLine, RiFileAddLine } from '@remixicon/react';
 import getSearchedToken from '../../getSearchedToken';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const AcceptFile = () => {
   // Define states
@@ -252,10 +257,118 @@ const AcceptFile = () => {
   const [mostActiveMemberVisibility, setMostActiveMemberVisibility] =
     useState(false);
 
+  const useTheme = () => {
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(
+      window?.matchMedia('(prefers-color-scheme: dark)').matches && true,
+    );
+
+    useEffect(() => {
+      const handleThemeChange = (e: MediaQueryListEvent) => {
+        setIsDarkMode(e.matches);
+      };
+
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', handleThemeChange);
+
+      return () => {
+        mediaQuery.removeEventListener('change', handleThemeChange);
+      };
+    }, []);
+
+    return isDarkMode;
+  };
+
+  const isDarkMode = useTheme();
+
+  const searchResults = (
+    <List>
+      {matchedMessages &&
+        matchedMessages.map((message, index) => (
+          <ListItem key={index}>
+            <div className="w-full">
+              {isMessageObject(message) && (
+                <div className="flex flex-col w-full p-4 rounded-md bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle">
+                  <div className="flex justify-between">
+                    <p className="text-emerald-500 font-semibold">
+                      {message.Author}
+                    </p>
+                    <p className="text-sm">
+                      {message.Hour}:{message.Minute} - {message.Day}/
+                      {message.Month}/{message.Year}
+                    </p>
+                  </div>
+                  {message.Message.split('\n').map((lines, index) => (
+                    <p
+                      className="text-tremor-content-strong dark:text-dark-tremor-content-strong py-2"
+                      key={index}
+                    >
+                      {lines}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ListItem>
+        ))}
+    </List>
+  );
+
+  const searchStats = (
+    <>
+      <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium mt-5">
+        Search Statistics
+      </h3>
+      <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
+        Group Member Search Matches
+      </p>
+      <BarChart
+        className="mt-6"
+        data={matchedMessagesCounts}
+        index="sender"
+        categories={['Matches']}
+        colors={['emerald']}
+        valueFormatter={dataFormatter}
+        yAxisWidth={30}
+      />
+
+      {matchedMessages.slice(-1).map((message, index) => (
+        <Divider key={index}>
+          Search matches: {!isMessageObject(message) && message.hitCount}
+        </Divider>
+      ))}
+    </>
+  );
+
+  const searchConsole = (
+    <>
+      {searchStats}
+      {searchResults}
+    </>
+  );
+
   return (
     <div>
+      <nav className="sticky top-0 left-0 z-50 w-full h-0 overflow-visible">
+        <ul className="flex flex-row justify-between items-center">
+          <motion.li whileHover={{ scale: 0.95 }} whileTap={{ scale: 0.85 }}>
+            <Link href={'/'}>
+              <Image
+                src={ChatVizLogo}
+                alt="ChatViz Logo"
+                width="96"
+                className={`m-5 ${isDarkMode ? '' : 'logo-light'}`}
+              />
+            </Link>
+          </motion.li>
+          <motion.li whileHover={{ scale: 0.95 }} whileTap={{ scale: 0.85 }}>
+            <Link href={'/upload'}>
+              <RiFileAddLine size={40} className="m-5" />
+            </Link>
+          </motion.li>
+        </ul>
+      </nav>
       <Card className="mx-auto">
-        <p className="text-tremor-metric font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+        <p className="text-tremor-metric font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong mt-24">
           {groupChatName}
         </p>
         {Object.keys(groupMemberList).length > 0 && (
@@ -311,8 +424,9 @@ const AcceptFile = () => {
           <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
             Group Most Active Times
           </h3>
-          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-            Cumulative Hourly Messaging Frequency Ranked in Descending Order
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6 mt-2 py-2">
+            Cumulative Hourly Messaging Frequency Ranked in
+            Descending&nbsp;Order
           </p>
           <BarChart
             className="mt-6"
@@ -329,8 +443,8 @@ const AcceptFile = () => {
           <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
             Group Daily Messaging Activity
           </h3>
-          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-            Messaging Frequency Across Days
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6 mt-2 py-2">
+            Messaging Frequency Across&nbsp;Days
           </p>
           <AreaChart
             className="h-80"
@@ -348,8 +462,8 @@ const AcceptFile = () => {
           <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
             Daily Messaging Activity
           </h3>
-          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-            Cumulative Messaging Frequency Across Hours
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6 mt-2 py-2">
+            Cumulative Messaging Frequency Across&nbsp;Hours
           </p>
           <LineChart
             className="h-80"
@@ -370,8 +484,8 @@ const AcceptFile = () => {
           <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
             Total Group Daily Messaging Activity
           </h3>
-          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-            Total Group Messaging Frequency Across Hours
+          <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6 mt-2 py-2">
+            Total Group Messaging Frequency Across&nbsp;Hours
           </p>
           <AreaChart
             className="h-80"
@@ -388,18 +502,21 @@ const AcceptFile = () => {
         </Card>
         <Card
           className="mx-auto cursor-pointer"
-          onClick={() => setTopUsedWordsVisibility(prev => !prev)}
+          onClick={() => setMostActiveMemberVisibility(prev => !prev)}
         >
           <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-            Top Used Words
+            Most Active Members
           </h3>
-          {topUsedWordsVisibility && (
+          {mostActiveMemberVisibility && (
             <>
               <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
-                <span>Words</span>
-                <span>Count</span>
+                <span>Member</span>
+                <span>Messages</span>
               </p>
-              <BarList data={transformedTopUsedWordsData} className="mt-2" />
+              <BarList
+                data={transformedMostActiveMemberData}
+                className="mt-2"
+              />
             </>
           )}
         </Card>
@@ -422,21 +539,18 @@ const AcceptFile = () => {
         </Card>
         <Card
           className="mx-auto cursor-pointer"
-          onClick={() => setMostActiveMemberVisibility(prev => !prev)}
+          onClick={() => setTopUsedWordsVisibility(prev => !prev)}
         >
           <h3 className="text-tremor-title text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-            Most Active Members
+            Top Used Words
           </h3>
-          {mostActiveMemberVisibility && (
+          {topUsedWordsVisibility && (
             <>
               <p className="mt-4 text-tremor-default flex items-center justify-between text-tremor-content dark:text-dark-tremor-content">
-                <span>Member</span>
-                <span>Messages</span>
+                <span>Words</span>
+                <span>Count</span>
               </p>
-              <BarList
-                data={transformedMostActiveMemberData}
-                className="mt-2"
-              />
+              <BarList data={transformedTopUsedWordsData} className="mt-2" />
             </>
           )}
         </Card>
@@ -455,62 +569,19 @@ const AcceptFile = () => {
               }}
             />
           </div>
-          {!emptySearch && (
-            <>
-              <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium mt-5">
-                Search Statistics
-              </h3>
-              <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-                Group Member Search Matches
-              </p>
-              <BarChart
-                className="mt-6"
-                data={matchedMessagesCounts}
-                index="sender"
-                categories={['Matches']}
-                colors={['emerald']}
-                valueFormatter={dataFormatter}
-                yAxisWidth={30}
+          {!emptySearch ? (
+            searchConsole
+          ) : (
+            <div className="flex flex-col w-full h-[550px] justify-center items-center">
+              <Image
+                src={ChatVizIcon}
+                alt="ChatViz Icon"
+                width={1080 / 4}
+                height={1269 / 4}
+                className={`p-5 ${isDarkMode ? 'mix-blend-screen' : ''}`}
               />
-
-              {matchedMessages.slice(-1).map((message, index) => (
-                <Divider key={index}>
-                  Search matches:{' '}
-                  {!isMessageObject(message) && message.hitCount}
-                </Divider>
-              ))}
-            </>
+            </div>
           )}
-          <List>
-            {matchedMessages &&
-              matchedMessages.map((message, index) => (
-                <ListItem key={index}>
-                  <div className="w-full">
-                    {isMessageObject(message) && (
-                      <div className="flex flex-col w-full p-4 rounded-md bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle">
-                        <div className="flex justify-between">
-                          <p className="text-emerald-500 font-semibold">
-                            {message.Author}
-                          </p>
-                          <p className="text-sm">
-                            {message.Hour}:{message.Minute} - {message.Day}/
-                            {message.Month}/{message.Year}
-                          </p>
-                        </div>
-                        {message.Message.split('\n').map((lines, index) => (
-                          <p
-                            className="text-tremor-content-strong dark:text-dark-tremor-content-strong py-2"
-                            key={index}
-                          >
-                            {lines}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </ListItem>
-              ))}
-          </List>
         </Card>
       )}
     </div>

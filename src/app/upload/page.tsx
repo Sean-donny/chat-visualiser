@@ -4,6 +4,7 @@ import ChatVizLogo from '../../../public/ChatVizLogo.svg';
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Upload() {
   type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy/mm/dd';
@@ -97,12 +98,14 @@ export default function Upload() {
     <>
       <div className="w-full h-full bg-black">
         <nav className="flex justify-center md:justify-start">
-          <Image
-            src={ChatVizLogo}
-            alt="ChatViz Logo"
-            width="96"
-            className="m-5"
-          />
+          <Link href={'/'}>
+            <Image
+              src={ChatVizLogo}
+              alt="ChatViz Logo"
+              width="96"
+              className="m-5"
+            />
+          </Link>
         </nav>
         <div className="pt-36 md:pt-48 flex flex-col text-center p-6 md:p-0">
           <h1 className="text-[#f9fafb] text-4xl md:text-7xl tracking-tight mb-4 cursor-default">
