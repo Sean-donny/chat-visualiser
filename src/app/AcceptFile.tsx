@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useDebouncedCallback } from 'use-debounce';
+import React, { useEffect, useState } from 'react';
 import getGroupName from '../../getGroupName';
 import getGroupMembers from '../../getGroupMembers';
 import getGroupMembersActivity from '../../getGroupMembersActivity';
@@ -14,15 +13,13 @@ import getMostActiveTime from '../../getMostActiveTime';
 import getTopUsedWords from '../../getTopUsedWords';
 import getUserYapAmount from '../../getUserYapAmount';
 import getUserMostUsedWords from '../../getUserMostUsedWords';
+import { useDebouncedCallback } from 'use-debounce';
 
 import {
   AreaChart,
   BarChart,
   BarList,
-  Button,
   Card,
-  Dialog,
-  DialogPanel,
   Divider,
   DonutChart,
   EventProps,
@@ -31,19 +28,19 @@ import {
   ListItem,
   TextInput,
 } from '@tremor/react';
-import { RiChatUploadLine, RiSearchLine, RiUserLine } from '@remixicon/react';
+import { RiSearchLine, RiUserLine } from '@remixicon/react';
 import getSearchedToken from '../../getSearchedToken';
 
 const AcceptFile = () => {
-  const [textFile, setTextFile] = useState('No chat input yet');
-  const [groupChatName, setGroupChatName] = useState('Your Group Chat');
+  // Define states
+  const [textFile, setTextFile] = useState<string>('No chat input yet');
+  const [groupChatName, setGroupChatName] = useState<string>('Your Group Chat');
   const [groupMemberList, setGroupMemberList] = useState<
     {
       Name: string;
       Messages: number;
     }[]
   >([]);
-  // Extract sender names from groupMemberList array
   const [groupAuthors, setGroupAuthors] = useState<string[]>(['Author 1']);
   const [groupMembersActivity, setGroupMembersActivity] = useState<
     {
@@ -113,88 +110,71 @@ const AcceptFile = () => {
   >([]);
   const [userMostUsedWords, setUserMostUsedWords] = useState({});
 
-  const chatRef = useRef<HTMLInputElement>(null);
+  // Function to handle file processing
+  const processFileContent = (fileContent: string) => {
+    setTextFile(fileContent);
 
-  const handleFile = () => {
-    if (
-      chatRef.current &&
-      chatRef.current.files &&
-      chatRef.current.files.length > 0
-    ) {
-      const file = chatRef.current.files[0];
-      // Do something with the file, for example, read its contents
-      const reader = new FileReader();
-      reader.onload = event => {
-        if (event.target && event.target.result) {
-          setTextFile(event.target.result.toString());
-          const temp = getGroupName(event.target.result.toString());
-          if (temp) {
-            setGroupChatName(temp);
-          }
-          const temp2 = getGroupMembers(event.target.result.toString());
-          if (temp2) {
-            setGroupMemberList(temp2);
-            // Extract sender names from groupMemberList array
-            const senderNames = temp2.map(member => member.Name);
-            setGroupAuthors(senderNames);
-          }
-          const temp3 = getGroupData(event.target.result.toString());
-          if (temp3) {
-            setGroupMessages(temp3);
-          }
-          const temp4 = getDates(event.target.result.toString());
-          if (temp4) {
-            setGroupDates(temp4);
-          }
-          const temp5 = getTimes(event.target.result.toString());
-          if (temp5) {
-            setGroupTimes(temp5);
-          }
-          const temp6 = getMostActiveTime(event.target.result.toString());
-          if (temp6) {
-            setGroupMostActiveTime(temp6);
-          }
-          const temp7 = getGroupMembersActivity(event.target.result.toString());
-          if (temp7) {
-            setGroupMembersActivity(temp7);
-          }
-          const temp8 = getUserMostActiveTimes(event.target.result.toString());
-          if (temp8) {
-            setUserMostActiveTimes(temp8);
-          }
-        }
-      };
-      reader.readAsText(file);
+    const groupName = getGroupName(fileContent);
+    if (groupName) setGroupChatName(groupName);
+
+    const members = getGroupMembers(fileContent);
+    if (members) {
+      setGroupMemberList(members);
+      setGroupAuthors(members.map(member => member.Name));
     }
+
+    const messages = getGroupData(fileContent);
+    if (messages) setGroupMessages(messages);
+
+    const dates = getDates(fileContent);
+    if (dates) setGroupDates(dates);
+
+    const times = getTimes(fileContent);
+    if (times) setGroupTimes(times);
+
+    const mostActiveTime = getMostActiveTime(fileContent);
+    if (mostActiveTime) setGroupMostActiveTime(mostActiveTime);
+
+    const membersActivity = getGroupMembersActivity(fileContent);
+    if (membersActivity) setGroupMembersActivity(membersActivity);
+
+    const userActiveTimes = getUserMostActiveTimes(fileContent);
+    if (userActiveTimes) setUserMostActiveTimes(userActiveTimes);
   };
 
+  // UseEffect to initialize state from localStorage/sessionStorage
   useEffect(() => {
-    // Call getTopUsedWords whenever groupMessages changes (i.e., when getGroupData finishes processing)
+    const fileContent = sessionStorage.getItem('chatFileContent');
+    if (fileContent) {
+      processFileContent(fileContent);
+    }
+  }, []);
+
+  // Update related states when groupMessages changes
+  useEffect(() => {
     if (groupMessages.length > 0) {
-      const words = getTopUsedWords(groupMessages); // Call getTopUsedWords with groupMessages
-      setTopUsedWords(words); // Update topUsedWords state
-      const yappers = getUserYapAmount(groupMessages);
-      setUserYapAmount(yappers);
+      const words = getTopUsedWords(groupMessages);
+      setTopUsedWords(words);
+
+      const yapAmount = getUserYapAmount(groupMessages);
+      setUserYapAmount(yapAmount);
+
       const lexicon = getUserMostUsedWords(groupMessages);
       setUserMostUsedWords(lexicon);
     }
-  }, [groupMessages]); // Dependency on groupMessages
+  }, [groupMessages]);
 
   const [emptySearch, setEmptySearch] = useState(true);
 
   const handleSearch = useDebouncedCallback((term: string) => {
-    // Check if search is empty
     if (term !== '') {
       setEmptySearch(false);
       if (groupMessages) {
-        const temp = searchGroupMessages(groupMessages, term);
-        if (temp) {
-          setMatchedMessages(temp);
-        }
-        const tempCounts = getSearchedToken(groupMessages, term);
-        if (tempCounts) {
-          setMatchedMessagesCounts(tempCounts);
-        }
+        const matchedMsgs = searchGroupMessages(groupMessages, term);
+        if (matchedMsgs) setMatchedMessages(matchedMsgs);
+
+        const matchedCounts = getSearchedToken(groupMessages, term);
+        if (matchedCounts) setMatchedMessagesCounts(matchedCounts);
       }
     } else {
       setEmptySearch(true);
@@ -226,11 +206,10 @@ const AcceptFile = () => {
   }
 
   const dataFormatter = (number: number): string => {
-    const locale = navigator?.language || 'en-GB'; // Default to 'en-GB' if navigator.language is not available
+    const locale = navigator?.language || 'en-GB';
     return Intl.NumberFormat(locale).format(Math.round(number));
   };
 
-  // Define an array of tremor colors from your tailwind config
   const tremorColors = [
     'indigo',
     'emerald',
@@ -254,8 +233,8 @@ const AcceptFile = () => {
   const [dmaValue, setDMAValue] = useState<EventProps>(null);
 
   const transformedTopUsedWordsData = topUsedWords.map(item => ({
-    value: item.count, // Assuming 'count' corresponds to the value property of Bar<T>
-    name: item.word, // Assuming 'word' corresponds to the name property of Bar<T>
+    value: item.count,
+    name: item.word,
   }));
 
   const transformedYapperData = userYapAmount.map(item => ({
@@ -275,23 +254,6 @@ const AcceptFile = () => {
 
   return (
     <div>
-      <Card className="mx-auto">
-        <h3 className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
-          Upload Your Group Chat
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content leading-6">
-          Must Be In *.txt Format
-        </p>
-        <input
-          type="file"
-          name="chatText"
-          id="chatTextFileUpload"
-          ref={chatRef}
-          onChange={handleFile}
-          className="mt-5"
-        />
-      </Card>
-
       <Card className="mx-auto">
         <p className="text-tremor-metric font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
           {groupChatName}
