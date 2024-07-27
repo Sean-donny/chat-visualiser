@@ -12,7 +12,7 @@ import getUserMostActiveTimes from '../../getUserMostActiveTimes';
 import getMostActiveTime from '../../getMostActiveTime';
 import getTopUsedWords from '../../getTopUsedWords';
 import getUserYapAmount from '../../getUserYapAmount';
-import getUserMostUsedWords from '../../getUserMostUsedWords';
+// import getUserMostUsedWords from '../../getUserMostUsedWords';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
 import ChatVizLogo from '../../public/ChatVizLogo.svg';
@@ -37,8 +37,10 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 const AcceptFile = () => {
+  type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy/mm/dd';
+  type TimeFormat = 'hh:mm:ss' | 'hh:mm:ss a';
+
   // Define states
-  const [textFile, setTextFile] = useState<string>('No chat input yet');
   const [groupChatName, setGroupChatName] = useState<string>('Your Group Chat');
   const [groupMemberList, setGroupMemberList] = useState<
     {
@@ -90,7 +92,7 @@ const AcceptFile = () => {
     }[]
   >([]);
   const [groupTimes, setGroupTimes] = useState<
-    { hour: number; Messages: number }[]
+    { hour: string; Messages: number }[]
   >([]);
   const [userMostActiveTimes, setUserMostActiveTimes] = useState<
     {
@@ -113,46 +115,64 @@ const AcceptFile = () => {
       yapCount: number;
     }[]
   >([]);
-  const [userMostUsedWords, setUserMostUsedWords] = useState({});
+  // This function did not prove useful
+  // const [userMostUsedWords, setUserMostUsedWords] = useState({});
 
   // Function to handle file processing
-  const processFileContent = (fileContent: string) => {
-    setTextFile(fileContent);
-
-    const groupName = getGroupName(fileContent);
+  const processFileContent = (
+    fileContent: string,
+    dateFormat: DateFormat,
+    timeFormat: TimeFormat,
+  ) => {
+    const groupName = getGroupName(fileContent, dateFormat, timeFormat);
     if (groupName) setGroupChatName(groupName);
 
-    const members = getGroupMembers(fileContent);
+    const members = getGroupMembers(fileContent, dateFormat, timeFormat);
     if (members) {
       setGroupMemberList(members);
       setGroupAuthors(members.map(member => member.Name));
     }
 
-    const messages = getGroupData(fileContent);
+    const messages = getGroupData(fileContent, dateFormat, timeFormat);
     if (messages) setGroupMessages(messages);
 
-    const dates = getDates(fileContent);
+    const dates = getDates(fileContent, dateFormat, timeFormat);
     if (dates) setGroupDates(dates);
 
-    const times = getTimes(fileContent);
+    const times = getTimes(fileContent, dateFormat, timeFormat);
     if (times) setGroupTimes(times);
 
     const mostActiveTime = getMostActiveTime(fileContent);
     if (mostActiveTime) setGroupMostActiveTime(mostActiveTime);
 
-    const membersActivity = getGroupMembersActivity(fileContent);
+    const membersActivity = getGroupMembersActivity(
+      fileContent,
+      dateFormat,
+      timeFormat,
+    );
     if (membersActivity) setGroupMembersActivity(membersActivity);
 
-    const userActiveTimes = getUserMostActiveTimes(fileContent);
+    const userActiveTimes = getUserMostActiveTimes(
+      fileContent,
+      // dateFormat,
+      // timeFormat,
+    );
     if (userActiveTimes) setUserMostActiveTimes(userActiveTimes);
   };
 
   // UseEffect to initialize state from localStorage/sessionStorage
   useEffect(() => {
     const fileContent = sessionStorage.getItem('chatFileContent');
+    const dateFormat = sessionStorage.getItem('dateFormat');
+    const timeFormat = sessionStorage.getItem('timeFormat');
     if (fileContent) {
-      processFileContent(fileContent);
+      processFileContent(
+        fileContent,
+        dateFormat as DateFormat,
+        timeFormat as TimeFormat,
+      );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update related states when groupMessages changes
@@ -164,8 +184,8 @@ const AcceptFile = () => {
       const yapAmount = getUserYapAmount(groupMessages);
       setUserYapAmount(yapAmount);
 
-      const lexicon = getUserMostUsedWords(groupMessages);
-      setUserMostUsedWords(lexicon);
+      // const lexicon = getUserMostUsedWords(groupMessages);
+      // setUserMostUsedWords(lexicon);
     }
   }, [groupMessages]);
 
@@ -413,7 +433,6 @@ const AcceptFile = () => {
                 data={transformedMostActiveMemberData}
                 variant="pie"
                 valueFormatter={dataFormatter}
-                onValueChange={v => console.log(v)}
               />
             </div>
           </Card>

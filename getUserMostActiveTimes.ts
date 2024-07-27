@@ -48,6 +48,8 @@ export default function getUserMostActiveTimes(
     ...activity,
   }));
 
+  // console.log(hourlyActivityArray);
+
   return hourlyActivityArray;
 }
 
