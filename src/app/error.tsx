@@ -33,13 +33,19 @@ export default function Error() {
           <ul className="mt-4">
             <li className="text-gray-300 font-normal text-base md:text-xl cursor-default mb-4">
               1. Your file has to be in *.txt&nbsp;format
+              <br />
+              <p className="text-red-500">
+                Unzip the chat file before uploading
+              </p>
             </li>
             <li className="text-gray-300 font-normal text-base md:text-xl cursor-default mb-4">
               2. The file must be exported directly from&nbsp;Whatsapp
             </li>
             <li className="text-gray-300 font-normal text-base md:text-xl cursor-default mb-4">
-              3. Make sure the correct date and time formats
-              have&nbsp;been&nbsp;selected
+              <p className="text-red-500">
+                3. Make sure the correct date and time formats
+                have&nbsp;been&nbsp;selected
+              </p>
             </li>
             <li className="text-gray-300 font-normal text-base md:text-xl cursor-default mb-4">
               4. If you&#39;re sure you&#39;ve got steps 1-3 down
