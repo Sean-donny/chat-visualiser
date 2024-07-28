@@ -24,7 +24,7 @@ export default function getGroupName(
 
     const timePatterns: Record<TimeFormat, string> = {
       'hh:mm:ss': '\\d{2}:\\d{2}:\\d{2}', // Example: 14:10:45
-      'hh:mm:ss a': `\\d{1,2}:\\d{2}:\\d{2}\u202F[APap][Mm]`, // Example: 2:10:45 PM (with non-breaking space)
+      'hh:mm:ss a': `\\d{1,2}:\\d{2}:\\d{2}[\u202F\\s][APap][Mm]`, // Example: 2:10:45 PM (with non-breaking space)
     };
 
     // Determine the date and time patterns based on the provided formats

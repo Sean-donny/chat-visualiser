@@ -98,10 +98,6 @@ const HomePage = () => {
             }}
           >
             &nbsp;{renderWord('Your')}&nbsp;
-            {/* </span>
-          <span
-            className={`fancy-hero-word ${isSmallScreen ? 'block' : 'inline'}`}
-          > */}
             {renderWord('Dreams')}
           </span>
         </motion.h1>
@@ -114,7 +110,7 @@ const HomePage = () => {
               setBallRadius(defaultBallRadius);
             }}
           >
-            If your dream was a group chat...
+            If they were about your group chat...
           </span>
         </h2>
       </div>

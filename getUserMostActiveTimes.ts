@@ -3,15 +3,46 @@ interface HourlyActivity {
   [sender: string]: number;
 }
 
+type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy/mm/dd';
+type TimeFormat = 'hh:mm:ss' | 'hh:mm:ss a';
+
 export default function getUserMostActiveTimes(
   data: string,
+  dateFormat: DateFormat,
+  timeFormat: TimeFormat,
 ): HourlyActivity[] | null {
-  // Regular expression to match timestamps
-  const TIMESTAMP_REGEX =
-    /\[(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):\d{2}:\d{2}\]\s([^:]+):/g;
+  // Type guard to ensure data is a string
+  if (typeof data !== 'string') {
+    throw new Error('Expected string data but received ' + typeof data);
+  }
+
+  // Remove all invisible characters
+  const originalChat = data.replace(/‎/gm, '');
+
+  // Define regex patterns for different date and time formats
+  const datePatterns: Record<DateFormat, string> = {
+    'dd/mm/yyyy': '(\\d{2})/(\\d{2})/(\\d{4})', // Example: 07/01/2023
+    'mm/dd/yyyy': '(\\d{2})/(\\d{2})/(\\d{4})', // Example: 01/07/2023
+    'yyyy/mm/dd': '(\\d{4})/(\\d{2})/(\\d{2})', // Example: 2023/07/01
+  };
+
+  const timePatterns: Record<TimeFormat, string> = {
+    'hh:mm:ss': '(\\d{1,2}):(\\d{2}):(\\d{2})', // Example: 14:10:45
+    'hh:mm:ss a': '(\\d{1,2}):(\\d{2}):(\\d{2})[\\u202F\\s]([APap][Mm])', // Example: 2:10:45 PM
+  };
+
+  // Determine the date and time patterns based on the provided formats
+  const datePattern = datePatterns[dateFormat];
+  const timePattern = timePatterns[timeFormat];
+
+  // Construct the full timestamp regex pattern for matching
+  const TIMESTAMP_REGEX = new RegExp(
+    `\\[${datePattern},\\s${timePattern}\\]\\s([^:]+):`,
+    'g',
+  );
 
   // Store group chat name
-  const gcName = extractGroupName(data);
+  const gcName = extractGroupName(data, dateFormat, timeFormat);
 
   if (!gcName) {
     console.error('Error: Group chat name not found');
@@ -23,9 +54,21 @@ export default function getUserMostActiveTimes(
 
   // Extract sender and hour from each timestamp and update senderActiveTimes
   let match;
-  while ((match = TIMESTAMP_REGEX.exec(data)) !== null) {
-    const hour = parseInt(match[4], 10); // Extract the hour from the timestamp
-    const sender = match[5].trim(); // Extract the sender
+  while ((match = TIMESTAMP_REGEX.exec(originalChat)) !== null) {
+    let hour = 0;
+    if (timeFormat === 'hh:mm:ss a') {
+      const [, , , , rawHour, , , period] = match;
+      hour = parseInt(rawHour, 10);
+      if (period.toLowerCase() === 'pm' && hour !== 12) {
+        hour += 12;
+      } else if (period.toLowerCase() === 'am' && hour === 12) {
+        hour = 0;
+      }
+    } else {
+      const [, , , , rawHour] = match;
+      hour = parseInt(rawHour, 10);
+    }
+    const sender = match[match.length - 1].trim(); // Extract the sender
 
     // Check that sender is not the group chat itself
     if (sender === gcName) continue;
@@ -48,12 +91,14 @@ export default function getUserMostActiveTimes(
     ...activity,
   }));
 
-  // console.log(hourlyActivityArray);
-
   return hourlyActivityArray;
 }
 
-function extractGroupName(data: string): string | null {
+function extractGroupName(
+  data: string,
+  dateFormat: DateFormat,
+  timeFormat: TimeFormat,
+): string | null {
   // Regex to search for group chat creation message
   const groupChatNameRegex =
     /Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them./;
@@ -61,14 +106,33 @@ function extractGroupName(data: string): string | null {
   // Remove all invisible characters
   const originalChat = data.replace(/‎/gm, '');
 
-  // Strict regex to search for date
-  const DATE_REGEX = /^\[\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}:\d{2}\]\s/gm;
+  // Define regex patterns for different date and time formats
+  const datePatterns: Record<DateFormat, string> = {
+    'dd/mm/yyyy': '(\\d{2})/(\\d{2})/(\\d{4})', // Example: 07/01/2023
+    'mm/dd/yyyy': '(\\d{2})/(\\d{2})/(\\d{4})', // Example: 01/07/2023
+    'yyyy/mm/dd': '(\\d{4})/(\\d{2})/(\\d{2})', // Example: 2023/07/01
+  };
+
+  const timePatterns: Record<TimeFormat, string> = {
+    'hh:mm:ss': '(\\d{1,2}):(\\d{2}):(\\d{2})', // Example: 14:10:45
+    'hh:mm:ss a': '(\\d{1,2}):(\\d{2}):(\\d{2})[\\u202F\\s]([APap][Mm])', // Example: 2:10:45 PM
+  };
+
+  // Determine the date and time patterns based on the provided formats
+  const datePattern = datePatterns[dateFormat];
+  const timePattern = timePatterns[timeFormat];
+
+  // Construct the full timestamp regex pattern for splitting
+  const TIMESTAMP_REGEX = new RegExp(
+    `^\\[${datePattern},\\s${timePattern}\\]\\s`,
+    'gm',
+  );
 
   // Store group chat name if found
   let gcName = 'Your Group Chat';
 
   // Split the chat by date to get the messages
-  const chatMessages = originalChat.split(DATE_REGEX).splice(1);
+  const chatMessages = originalChat.split(TIMESTAMP_REGEX).splice(1);
 
   for (const message of chatMessages) {
     if (message.match(groupChatNameRegex)) {

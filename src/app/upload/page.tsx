@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Demo from '../../../demo';
 
 export default function Upload() {
   type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy/mm/dd';
@@ -82,6 +83,13 @@ export default function Upload() {
     router.push('/visualisation');
   };
 
+  const handleDemo = () => {
+    sessionStorage.setItem('chatFileContent', Demo);
+    sessionStorage.setItem('dateFormat', 'dd/mm/yyyy');
+    sessionStorage.setItem('timeFormat', 'hh:mm:ss');
+    router.push('/visualisation');
+  };
+
   const handleKeyPress = (event: React.KeyboardEvent<HTMLLabelElement>) => {
     if (event.key === 'Enter' && chatRef.current) {
       chatRef.current.click();
@@ -107,8 +115,8 @@ export default function Upload() {
             />
           </Link>
         </nav>
-        <div className="pt-36 md:pt-48 flex flex-col text-center p-6 md:p-0">
-          <h1 className="text-[#f9fafb] text-4xl md:text-7xl tracking-tight mb-4 cursor-default">
+        <div className="flex flex-col text-center p-6 md:p-0 justify-center items-center mt-10 sm:mt-12 md:mt-36">
+          <h1 className="text-[#f9fafb] text-4xl md:text-7xl tracking-tight mb-8 cursor-default">
             Let&#39;s Get Going...
           </h1>
           <h2 className="text-gray-300 font-normal text-base md:text-xl mb-6 cursor-default">
@@ -181,6 +189,19 @@ export default function Upload() {
               </motion.button>
             </div>
           </form>
+        </div>
+        <div className="text-center mt-12 md:mb-36">
+          <p className="text-gray-400 font-normal text-base md:text-xl cursor-default">
+            Don&#39;t have a chat?{' '}
+            <span
+              className="underline text-emerald-500"
+              onClick={() => {
+                handleDemo();
+              }}
+            >
+              Try&nbsp;out&nbsp;the&nbsp;demo
+            </span>
+          </p>
         </div>
       </div>
     </>

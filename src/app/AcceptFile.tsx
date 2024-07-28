@@ -36,6 +36,35 @@ import getSearchedToken from '../../getSearchedToken';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+const useTheme = () => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setIsDarkMode(darkModeQuery.matches);
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        setIsDarkMode(e.matches);
+      };
+
+      darkModeQuery.addEventListener('change', handleChange);
+
+      return () => {
+        darkModeQuery.removeEventListener('change', handleChange);
+      };
+    }
+  }, []);
+
+  return isDarkMode;
+};
+
+const dataFormatter = (number: number): string => {
+  const locale =
+    typeof navigator !== 'undefined' ? navigator.language : 'en-GB';
+  return Intl.NumberFormat(locale).format(Math.round(number));
+};
+
 const AcceptFile = () => {
   type DateFormat = 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'yyyy/mm/dd';
   type TimeFormat = 'hh:mm:ss' | 'hh:mm:ss a';
@@ -142,7 +171,11 @@ const AcceptFile = () => {
     const times = getTimes(fileContent, dateFormat, timeFormat);
     if (times) setGroupTimes(times);
 
-    const mostActiveTime = getMostActiveTime(fileContent);
+    const mostActiveTime = getMostActiveTime(
+      fileContent,
+      dateFormat,
+      timeFormat,
+    );
     if (mostActiveTime) setGroupMostActiveTime(mostActiveTime);
 
     const membersActivity = getGroupMembersActivity(
@@ -154,8 +187,8 @@ const AcceptFile = () => {
 
     const userActiveTimes = getUserMostActiveTimes(
       fileContent,
-      // dateFormat,
-      // timeFormat,
+      dateFormat,
+      timeFormat,
     );
     if (userActiveTimes) setUserMostActiveTimes(userActiveTimes);
   };
@@ -230,11 +263,6 @@ const AcceptFile = () => {
     );
   }
 
-  const dataFormatter = (number: number): string => {
-    const locale = navigator?.language || 'en-GB';
-    return Intl.NumberFormat(locale).format(Math.round(number));
-  };
-
   const tremorColors = [
     'indigo',
     'emerald',
@@ -276,27 +304,6 @@ const AcceptFile = () => {
   const [yapIndexVisibility, setYapIndexVisibility] = useState(false);
   const [mostActiveMemberVisibility, setMostActiveMemberVisibility] =
     useState(false);
-
-  const useTheme = () => {
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(
-      window?.matchMedia('(prefers-color-scheme: dark)').matches && true,
-    );
-
-    useEffect(() => {
-      const handleThemeChange = (e: MediaQueryListEvent) => {
-        setIsDarkMode(e.matches);
-      };
-
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', handleThemeChange);
-
-      return () => {
-        mediaQuery.removeEventListener('change', handleThemeChange);
-      };
-    }, []);
-
-    return isDarkMode;
-  };
 
   const isDarkMode = useTheme();
 
@@ -433,6 +440,7 @@ const AcceptFile = () => {
                 data={transformedMostActiveMemberData}
                 variant="pie"
                 valueFormatter={dataFormatter}
+                colors={tremorColors}
               />
             </div>
           </Card>
