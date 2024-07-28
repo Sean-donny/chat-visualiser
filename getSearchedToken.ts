@@ -1,40 +1,50 @@
+interface GroupMessage {
+  Day: string;
+  Month: string;
+  Year: string;
+  Hour: string;
+  Minute: string;
+  Second: string;
+  Author: string;
+  Message: string;
+}
+
 interface GroupSearches {
   sender: string;
   Matches: number;
 }
 
 export default function getSearchedToken(
-  data: {
-    Day: string;
-    Month: string;
-    Year: string;
-    Hour: string;
-    Minute: string;
-    Second: string;
-    Author: string;
-    Message: string;
-  }[],
+  data: GroupMessage[],
   term: string,
+  authors?: string[],
+  startDate?: Date,
+  endDate?: Date,
 ): GroupSearches[] | void {
-  // Type guard to ensure data is an object
   if (typeof data === 'object') {
-    // Construct dynamic search regex with the provided term
-    const SEARCH_REGEX = new RegExp(term, 'gi'); // 'gi' flags for global and case-insensitive search
-
-    // Object to store the group members and their match value of the search token
+    const SEARCH_REGEX = new RegExp(term, 'gi');
     const groupSearches: Record<string, number> = {};
 
     if (term !== '') {
       for (const message of data) {
-        const res = message.Message.match(SEARCH_REGEX);
-        // If the message includes the search token, increment
-        // Initialise sender in groupSearches if this sender has not yet been declared
-        if (!groupSearches[message.Author]) {
-          groupSearches[message.Author] = 0;
-        }
-        if (res) {
-          groupSearches[message.Author] =
-            (groupSearches[message.Author] || 0) + res.length;
+        const messageDate = new Date(
+          `${message.Year}-${message.Month}-${message.Day}T${message.Hour}:${message.Minute}:${message.Second}`,
+        );
+        const isInDateRange =
+          (!startDate || messageDate >= startDate) &&
+          (!endDate || messageDate <= endDate);
+        const isAuthorMatch =
+          !authors || authors.length === 0 || authors.includes(message.Author);
+
+        if (isInDateRange && isAuthorMatch) {
+          const res = message.Message.match(SEARCH_REGEX);
+          if (!groupSearches[message.Author]) {
+            groupSearches[message.Author] = 0;
+          }
+          if (res) {
+            groupSearches[message.Author] =
+              (groupSearches[message.Author] || 0) + res.length;
+          }
         }
       }
 

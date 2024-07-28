@@ -75,7 +75,7 @@ export default function getGroupData(
         if (timeFormat === 'hh:mm:ss a') {
           [, Day, Month, Year, Hour, Minute, Second, AmPm, Author, Message] =
             match;
-          Hour = `${Hour}${AmPm}`; // Append AM/PM to the Hour
+          Hour = convertTo24HourFormat(Hour, AmPm);
         } else {
           [, Day, Month, Year, Hour, Minute, Second, Author, Message] = match;
         }
@@ -83,7 +83,7 @@ export default function getGroupData(
         if (timeFormat === 'hh:mm:ss a') {
           [, Month, Day, Year, Hour, Minute, Second, AmPm, Author, Message] =
             match;
-          Hour = `${Hour}${AmPm}`; // Append AM/PM to the Hour
+          Hour = convertTo24HourFormat(Hour, AmPm);
         } else {
           [, Month, Day, Year, Hour, Minute, Second, Author, Message] = match;
         }
@@ -91,7 +91,7 @@ export default function getGroupData(
         if (timeFormat === 'hh:mm:ss a') {
           [, Year, Month, Day, Hour, Minute, Second, AmPm, Author, Message] =
             match;
-          Hour = `${Hour}${AmPm}`; // Append AM/PM to the Hour
+          Hour = convertTo24HourFormat(Hour, AmPm);
         } else {
           [, Year, Month, Day, Hour, Minute, Second, Author, Message] = match;
         }
@@ -113,9 +113,13 @@ export default function getGroupData(
         // Check that message is not from the group itself
         if (gcName !== null && Author.includes(gcName)) continue;
 
+        // Special check if "You" messages are present
+        if (Author === 'You') continue;
+
         // Check that message is not an attachment
         if (
           Message.includes('audio omitted') ||
+          Message.includes('video omitted') ||
           Message.includes('image omitted') ||
           Message.includes('GIF omitted') ||
           Message.includes('Contact card omitted') ||
@@ -125,10 +129,20 @@ export default function getGroupData(
         )
           continue;
 
-        // Check that message is not a member addition message
+        // Check that message is not a member addition, removal or group creation message
         if (
-          Message.includes('You added ' + Author) ||
-          Message.includes(Author + ' created this group')
+          Message.includes('added ' + Author) ||
+          Message.includes('removed ' + Author) ||
+          Message.includes(Author + ' left') ||
+          Message.includes(Author + ' created this group') ||
+          Message.includes(Author + ' created group “')
+        )
+          continue;
+
+        // Check that message is not group edit or update
+        if (
+          Message.includes(Author + ` changed this group's icon`) ||
+          Message.includes(Author + ' changed the group description')
         )
           continue;
 
@@ -205,4 +219,15 @@ function extractGroupName(
 
   // If group chat name is found, return it; otherwise, return a default message
   return gcName ? gcName : null;
+}
+
+// Function to convert 12-hour format to 24-hour format
+function convertTo24HourFormat(hour: string, amPm: string) {
+  let newHour = parseInt(hour, 10);
+  if (amPm.toUpperCase() === 'PM' && newHour < 12) {
+    newHour += 12;
+  } else if (amPm.toUpperCase() === 'AM' && newHour === 12) {
+    newHour = 0;
+  }
+  return newHour.toString().padStart(2, '0'); // Ensure hour is two digits
 }

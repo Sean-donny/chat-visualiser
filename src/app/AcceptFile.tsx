@@ -23,41 +23,22 @@ import {
   BarChart,
   BarList,
   Card,
+  DateRangePicker,
+  DateRangePickerValue,
   Divider,
   DonutChart,
   EventProps,
   LineChart,
   List,
   ListItem,
+  MultiSelect,
+  MultiSelectItem,
   TextInput,
 } from '@tremor/react';
 import { RiSearchLine, RiUserLine, RiFileAddLine } from '@remixicon/react';
 import getSearchedToken from '../../getSearchedToken';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-
-const useTheme = () => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      setIsDarkMode(darkModeQuery.matches);
-
-      const handleChange = (e: MediaQueryListEvent) => {
-        setIsDarkMode(e.matches);
-      };
-
-      darkModeQuery.addEventListener('change', handleChange);
-
-      return () => {
-        darkModeQuery.removeEventListener('change', handleChange);
-      };
-    }
-  }, []);
-
-  return isDarkMode;
-};
 
 const dataFormatter = (number: number): string => {
   const locale =
@@ -223,22 +204,68 @@ const AcceptFile = () => {
   }, [groupMessages]);
 
   const [emptySearch, setEmptySearch] = useState(true);
+  const [term, setTerm] = useState<string>('');
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
-  const handleSearch = useDebouncedCallback((term: string) => {
-    if (term !== '') {
-      setEmptySearch(false);
-      if (groupMessages) {
-        const matchedMsgs = searchGroupMessages(groupMessages, term);
-        if (matchedMsgs) setMatchedMessages(matchedMsgs);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTerm(e.target.value);
+    handleSearch(
+      e.target.value,
+      authors,
+      startDate ?? undefined,
+      endDate ?? undefined,
+    );
+  };
 
-        const matchedCounts = getSearchedToken(groupMessages, term);
-        if (matchedCounts) setMatchedMessagesCounts(matchedCounts);
+  const handleAuthorsChange = (values: string[]) => {
+    setAuthors(values);
+    handleSearch(term, values, startDate ?? undefined, endDate ?? undefined);
+  };
+
+  const handleDateChange = (range: {
+    from?: Date;
+    to?: Date;
+    selectValue?: string;
+  }) => {
+    const from = range.from ?? null;
+    const to = range.to ?? null;
+    setStartDate(from);
+    setEndDate(to);
+    handleSearch(term, authors, from ?? undefined, to ?? undefined);
+  };
+
+  const handleSearch = useDebouncedCallback(
+    (term: string, authors?: string[], startDate?: Date, endDate?: Date) => {
+      if (term !== '') {
+        setEmptySearch(false);
+        if (groupMessages) {
+          const matchedMsgs = searchGroupMessages(
+            groupMessages,
+            term,
+            authors,
+            startDate,
+            endDate,
+          );
+          if (matchedMsgs) setMatchedMessages(matchedMsgs);
+
+          const matchedCounts = getSearchedToken(
+            groupMessages,
+            term,
+            authors,
+            startDate,
+            endDate,
+          );
+          if (matchedCounts) setMatchedMessagesCounts(matchedCounts);
+        }
+      } else {
+        setEmptySearch(true);
+        setMatchedMessages([]);
       }
-    } else {
-      setEmptySearch(true);
-      setMatchedMessages([]);
-    }
-  }, 300);
+    },
+    300,
+  );
 
   function isMessageObject(message: any): message is {
     Day: string;
@@ -305,8 +332,6 @@ const AcceptFile = () => {
   const [mostActiveMemberVisibility, setMostActiveMemberVisibility] =
     useState(false);
 
-  const isDarkMode = useTheme();
-
   const searchResults = (
     <List>
       {matchedMessages &&
@@ -314,12 +339,12 @@ const AcceptFile = () => {
           <ListItem key={index}>
             <div className="w-full">
               {isMessageObject(message) && (
-                <div className="flex flex-col w-full p-4 rounded-md bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle">
+                <div className="flex flex-col w-full p-4 rounded-md bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle overflow-x-auto">
                   <div className="flex justify-between">
                     <p className="text-emerald-500 font-semibold">
                       {message.Author}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-right">
                       {message.Hour}:{message.Minute} - {message.Day}/
                       {message.Month}/{message.Year}
                     </p>
@@ -355,7 +380,7 @@ const AcceptFile = () => {
         categories={['Matches']}
         colors={['emerald']}
         valueFormatter={dataFormatter}
-        yAxisWidth={30}
+        yAxisWidth={55}
       />
 
       {matchedMessages.slice(-1).map((message, index) => (
@@ -374,16 +399,17 @@ const AcceptFile = () => {
   );
 
   return (
-    <div>
+    <div className="bg-tremor-background dark:bg-dark-tremor-background">
       <nav className="sticky top-0 left-0 z-50 w-full h-0 overflow-visible">
         <ul className="flex flex-row justify-between items-center">
           <motion.li whileHover={{ scale: 0.95 }} whileTap={{ scale: 0.85 }}>
             <Link href={'/'}>
               <Image
+                priority={true}
                 src={ChatVizLogo}
                 alt="ChatViz Logo"
                 width="96"
-                className={`m-5 ${isDarkMode ? '' : 'logo-light'}`}
+                className="m-5 brightness-0 dark:brightness-100"
               />
             </Link>
           </motion.li>
@@ -462,7 +488,7 @@ const AcceptFile = () => {
             categories={['Messages']}
             colors={['emerald']}
             valueFormatter={dataFormatter}
-            yAxisWidth={30}
+            yAxisWidth={45}
           />
           <Divider>Hours</Divider>
         </Card>
@@ -480,7 +506,7 @@ const AcceptFile = () => {
             categories={['Messages']}
             colors={['emerald']}
             valueFormatter={dataFormatter}
-            yAxisWidth={30}
+            yAxisWidth={45}
             showAnimation={true}
             autoMinValue={true}
           />
@@ -494,12 +520,13 @@ const AcceptFile = () => {
           </p>
           <LineChart
             className="h-80"
+            enableLegendSlider={true}
             data={userMostActiveTimes}
             index="Hour"
             categories={groupAuthors}
             colors={tremorColors}
             valueFormatter={dataFormatter}
-            yAxisWidth={30}
+            yAxisWidth={45}
             showAnimation={true}
             autoMinValue={true}
             connectNulls={true}
@@ -521,7 +548,7 @@ const AcceptFile = () => {
             categories={['Messages']}
             colors={['emerald']}
             valueFormatter={dataFormatter}
-            yAxisWidth={30}
+            yAxisWidth={45}
             showAnimation={true}
             autoMinValue={true}
           />
@@ -591,21 +618,40 @@ const AcceptFile = () => {
             <TextInput
               icon={RiSearchLine}
               placeholder="Search..."
-              onChange={e => {
-                handleSearch(e.target.value);
-              }}
+              onChange={handleInputChange}
+              className="mx-auto max-w-md"
             />
+          </div>
+          <div className="mx-auto max-w-md space-y-3 mt-4">
+            <p className="text-center text-sm text-slate-500">Filters</p>
+            <DateRangePicker
+              enableYearNavigation={true}
+              onValueChange={handleDateChange}
+              className="mx-auto max-w-md"
+            />
+            <MultiSelect
+              icon={RiUserLine}
+              placeholder="Filter by Author"
+              onValueChange={handleAuthorsChange}
+            >
+              {groupMemberList.map((member, index) => (
+                <MultiSelectItem value={member.Name} key={index}>
+                  {member.Name}
+                </MultiSelectItem>
+              ))}
+            </MultiSelect>
           </div>
           {!emptySearch ? (
             searchConsole
           ) : (
             <div className="flex flex-col w-full h-[550px] justify-center items-center">
               <Image
+                priority={true}
                 src={ChatVizIcon}
                 alt="ChatViz Icon"
                 width={1080 / 4}
                 height={1269 / 4}
-                className={`p-5 ${isDarkMode ? 'mix-blend-screen' : ''}`}
+                className="p-5 mix-blend-normal dark:mix-blend-screen"
               />
             </div>
           )}

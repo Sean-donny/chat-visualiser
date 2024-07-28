@@ -61,6 +61,9 @@ export default function getGroupMembersActivity(
     // Extract sender's name from the message
     const currentName = message.split(':')[0].trim();
 
+    // Special check if "You" messages are present
+    if (currentName === 'You') continue;
+
     // Increment count of group member messages
     groupMembers[currentName] = (groupMembers[currentName] || 0) + 1;
   }

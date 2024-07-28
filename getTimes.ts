@@ -57,15 +57,13 @@ export default function getTimes(
         // Adjust for 12-hour format if necessary
         if (timeFormat === 'hh:mm:ss a') {
           amPm = timeMatch[4] ?? '';
-          hour = `${hour}${amPm.toLowerCase()}`;
+          hour = convertTo24HourFormat(hour, amPm);
+        } else {
+          hour = parseInt(hour, 10).toString(); // Convert hour to number and then back to string to remove leading zero
         }
 
-        // Ensure hour is stored correctly
-        const timeKey =
-          timeFormat === 'hh:mm:ss a' ? hour : parseInt(hour, 10).toString();
-
         // Increment count for the current hour
-        timeCounts[timeKey] = (timeCounts[timeKey] || 0) + 1;
+        timeCounts[hour] = (timeCounts[hour] || 0) + 1;
       }
     }
   }
@@ -77,27 +75,7 @@ export default function getTimes(
   }));
 
   // Sort the array to ensure proper order of times
-  if (timeFormat === 'hh:mm:ss a') {
-    timeArray.sort((a, b) => {
-      const timeA = a.hour.match(/(\d+)(am|pm)/i);
-      const timeB = b.hour.match(/(\d+)(am|pm)/i);
-      if (timeA && timeB) {
-        const [hourA, periodA] = timeA.slice(1);
-        const [hourB, periodB] = timeB.slice(1);
-        const periodOrder = ['am', 'pm'];
-        if (periodA.toLowerCase() !== periodB.toLowerCase()) {
-          return (
-            periodOrder.indexOf(periodA.toLowerCase()) -
-            periodOrder.indexOf(periodB.toLowerCase())
-          );
-        }
-        return parseInt(hourA) - parseInt(hourB);
-      }
-      return 0;
-    });
-  } else {
-    timeArray.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-  }
+  timeArray.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
   // Check if the timeArray is empty
   if (timeArray.length !== 0) {
@@ -105,4 +83,15 @@ export default function getTimes(
   } else {
     return [{ hour: '-1', Messages: 0 }];
   }
+}
+
+// Function to convert 12-hour format to 24-hour format
+function convertTo24HourFormat(hour: string, amPm: string): string {
+  let newHour = parseInt(hour, 10);
+  if (amPm.toUpperCase() === 'PM' && newHour < 12) {
+    newHour += 12;
+  } else if (amPm.toUpperCase() === 'AM' && newHour === 12) {
+    newHour = 0;
+  }
+  return newHour.toString(); // Return hour without leading zeros
 }
