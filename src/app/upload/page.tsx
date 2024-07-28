@@ -120,13 +120,42 @@ export default function Upload() {
             Let&#39;s Get Going...
           </h1>
           <h2 className="text-gray-300 font-normal text-base md:text-xl mb-6 cursor-default">
-            Select your date & time formats, then upload&nbsp;your&nbsp;chat.
+            1. Export your WhatsApp group chat
             <br />
-            The file must be in *.txt format
+            2. Unzip the compressed folder to get the raw file
+            <br />
+            3. Upload your group&nbsp;chat which must be in *.txt format
+            <br />
+            4. Accurately select your date & time formats below
+            <br />
+            5. Click the green magic button
           </h2>
         </div>
         <div className="flex justify-center">
           <form onSubmit={handleSubmit} className="text-white space-y-6">
+            <div className="flex flex-col justify-center items-center">
+              <input
+                type="file"
+                name="chatText"
+                id="chatTextFileUpload"
+                ref={chatRef}
+                onChange={handleFile}
+                className="text-[#f9fafb] text-base font-normal"
+              />
+              <label
+                htmlFor="chatTextFileUpload"
+                id="uploadBtn"
+                className={`text-[#f9fafb] text-base font-normal ${
+                  hasFileError ? 'error-outline' : ''
+                }`}
+                tabIndex={0}
+                role="button"
+                onKeyDown={handleKeyPress}
+                style={{}}
+              >
+                Upload File
+              </label>
+            </div>
             <div className="flex flex-col justify-center items-center space-y-2">
               <select
                 id="dateFormat"
@@ -154,30 +183,7 @@ export default function Upload() {
                 <option value="hh:mm:ss a">12 Hour (HH:MM:SS AM/PM)</option>
               </select>
             </div>
-            <div className="flex flex-col justify-center items-center">
-              <input
-                type="file"
-                name="chatText"
-                id="chatTextFileUpload"
-                ref={chatRef}
-                // required={true}
-                onChange={handleFile}
-                className="text-[#f9fafb] text-base font-normal"
-              />
-              <label
-                htmlFor="chatTextFileUpload"
-                id="uploadBtn"
-                className={`text-[#f9fafb] text-base font-normal ${
-                  hasFileError ? 'error-outline' : ''
-                }`}
-                tabIndex={0}
-                role="button"
-                onKeyDown={handleKeyPress}
-                style={{}}
-              >
-                Upload File
-              </label>
-            </div>
+
             <div className="flex justify-center">
               <motion.button
                 type="submit"
@@ -194,7 +200,7 @@ export default function Upload() {
           <p className="text-gray-400 font-normal text-base md:text-xl cursor-default">
             Don&#39;t have a chat?{' '}
             <span
-              className="underline text-emerald-500"
+              className="underline text-emerald-500 cursor-pointer"
               onClick={() => {
                 handleDemo();
               }}
