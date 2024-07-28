@@ -190,7 +190,7 @@ export default function Upload() {
             </div>
           </form>
         </div>
-        <div className="text-center mt-12 md:mb-36">
+        <div className="text-center mt-12 mb-20 md:mb-36">
           <p className="text-gray-400 font-normal text-base md:text-xl cursor-default">
             Don&#39;t have a chat?{' '}
             <span
