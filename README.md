@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 💬 ChatViz – WhatsApp Group Chat Data Visualisation
 
-## Getting Started
+[Live Demo](https://chatviz.vercel.app/visualisation)
 
-First, run the development server:
+ChatViz is a data visualisation tool built with Next.js that helps users explore insights and patterns from their **WhatsApp group chat exports**. Originally inspired by a small fitness group chat that wanted to track ✅ check-ins, the project has grown into a fully interactive, privacy-friendly analytics dashboard.
+
+---
+
+## 🔍 Key Features
+
+- 📈 **Data Visualisation** using Chart.js and Tremor UI
+- 🧠 **Regex-based parsing** of WhatsApp `.txt` exports (any date & time format supported)
+- 💾 **Local storage** only – no data ever leaves the browser
+- 🔎 **Search & Filter** messages by author, date, or keyword
+- 🗂️ Group message trends, author activity breakdowns, emoji frequency, and more
+
+---
+
+## 🛠 Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org)
+- **Language:** TypeScript
+- **Styling:** [TailwindCSS](https://tailwindcss.com)
+- **Charts:** [Chart.js](https://www.chartjs.org)
+- **UI Components:** [Tremor](https://www.tremor.so)
+
+---
+
+## 🧾 How It Works
+
+1. **Export Your WhatsApp Chat**  
+   Export any WhatsApp group chat from your phone as a `.txt` file.  
+   No need to adjust your phone's date/time format – the app handles that automatically.
+
+2. **Upload to ChatViz**  
+   Drag and drop or upload your `.txt` file directly in the browser.
+
+3. **Parse & Store**  
+   The file is parsed using robust regular expressions, and all data is stored securely in your browser's **local storage**.
+
+4. **Explore the Insights**  
+   View charts showing:
+   - Who sends the most messages
+   - What time of day the group is most active
+   - Emoji frequency
+   - Word usage patterns
+   - And more...
+
+5. **Filter & Search**  
+   Refine the data by date range, author, or keywords.
+
+---
+
+## 📦 Installation (for local development)
 
 ```bash
+git clone https://github.com/Sean-donny/chat-visualiser.git
+cd chat-visualiser
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
